@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Gestor de tareas · Taller",
+    "slug": "gestor-tareas-taller",
+    "scheme": "gestortareas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router"
+    ],
+    "android": {
+      "package": "com.instituto.gestortareastaller"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

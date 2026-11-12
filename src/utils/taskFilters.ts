@@ -8,6 +8,6 @@ export function filterTasks(tasks: Task[], query: string, status: TaskStatus): T
   });
 
   return byStatus.filter((task) =>
-    task.title.toLowerCase().includes(query.toLowerCase())
+    task.title.toLowerCase().includes(query.trim().toLowerCase())
   );
 }

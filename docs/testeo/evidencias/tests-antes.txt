@@ -1,0 +1,66 @@
+
+> gestor-tareas-debugging@1.0.0 test
+> jest --runInBand
+
+FAIL __tests__/taskFilters.test.ts
+  ● filterTasks › busca sin distinguir entre minúsculas y mayúsculas
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+    [0m [90m 10 |[39m describe([32m'filterTasks'[39m[33m,[39m () [33m=>[39m {
+     [90m 11 |[39m   it([32m'busca sin distinguir entre minúsculas y mayúsculas'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 12 |[39m     expect(filterTasks(demo[33m,[39m [32m'VALIDAR'[39m[33m,[39m [32m'todas'[39m))[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m    |[39m                                                   [31m[1m^[22m[39m
+     [90m 13 |[39m   })[33m;[39m
+     [90m 14 |[39m   it([32m'ignora espacios antes y después de la búsqueda'[39m[33m,[39m () [33m=>[39m {
+     [90m 15 |[39m     expect(filterTasks(demo[33m,[39m [32m'  login  '[39m[33m,[39m [32m'todas'[39m))[33m.[39mtoHaveLength([35m1[39m)[33m;[39m[0m
+
+      at Object.toHaveLength (__tests__/taskFilters.test.ts:12:51)
+
+  ● filterTasks › ignora espacios antes y después de la búsqueda
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+    [0m [90m 13 |[39m   })[33m;[39m
+     [90m 14 |[39m   it([32m'ignora espacios antes y después de la búsqueda'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 15 |[39m     expect(filterTasks(demo[33m,[39m [32m'  login  '[39m[33m,[39m [32m'todas'[39m))[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m    |[39m                                                     [31m[1m^[22m[39m
+     [90m 16 |[39m   })[33m;[39m
+     [90m 17 |[39m   it([32m'filtra pendientes'[39m[33m,[39m () [33m=>[39m {
+     [90m 18 |[39m     expect(filterTasks(demo[33m,[39m [32m''[39m[33m,[39m [32m'pendientes'[39m))[33m.[39mtoHaveLength([35m2[39m)[33m;[39m[0m
+
+      at Object.toHaveLength (__tests__/taskFilters.test.ts:15:53)
+
+FAIL __tests__/taskValidation.test.ts
+  ● isValidTaskTitle › rechaza un título compuesto solo de espacios
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+    [0m [90m  6 |[39m   })[33m;[39m
+     [90m  7 |[39m   it([32m'rechaza un título compuesto solo de espacios'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m  8 |[39m     expect(isValidTaskTitle([32m'   '[39m))[33m.[39mtoBe([36mfalse[39m)[33m;[39m
+     [90m    |[39m                                     [31m[1m^[22m[39m
+     [90m  9 |[39m   })[33m;[39m
+     [90m 10 |[39m   it([32m'acepta un título que contiene palabras'[39m[33m,[39m () [33m=>[39m {
+     [90m 11 |[39m     expect(isValidTaskTitle([32m'  Preparar la entrega  '[39m))[33m.[39mtoBe([36mtrue[39m)[33m;[39m[0m
+
+      at Object.toBe (__tests__/taskValidation.test.ts:8:37)
+
+PASS __tests__/TaskCard.test.tsx
+
+Test Suites: 2 failed, 1 passed, 3 total
+Tests:       3 failed, 6 passed, 9 total
+Snapshots:   0 total
+Time:        3.341 s, estimated 5 s
+Ran all test suites.

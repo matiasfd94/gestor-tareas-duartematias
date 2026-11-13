@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Gestor de tareas · Taller",
-    "slug": "gestor-tareas-taller",
-    "scheme": "gestortareas",
+    "name": "Gestor de tareas · Duarte",
+    "slug": "gestor-tareas-duartematias",
+    "scheme": "gestortareasduarte",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -11,13 +11,19 @@
       "expo-font"
     ],
     "android": {
-      "package": "com.instituto.gestortareastaller"
+      "package": "com.matiasfd94.gestortareas"
     },
     "ios": {
       "supportsTablet": true
     },
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7820ec29-419a-4dfb-ad59-1ec5fb1897bf"
+      }
     }
   }
 }

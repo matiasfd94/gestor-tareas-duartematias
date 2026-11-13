@@ -1,0 +1,471 @@
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/cli@57.0.33
+npm warn Found: peer expo@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer expo@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/cli@57.0.33
+npm warn Found: peer expo-linking@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer expo-linking@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/cli@57.0.33
+npm warn Found: peer expo-constants@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer expo-constants@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/cli@57.0.33
+npm warn Found: peer react-native-screens@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer react-native-screens@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/cli@57.0.33
+npm warn Found: peer react-native-safe-area-context@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer react-native-safe-area-context@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/router-server@57.0.15
+npm warn Found: peer expo@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer expo@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/router-server@57.0.15
+npm warn Found: peer expo-linking@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer expo-linking@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/router-server@57.0.15
+npm warn Found: peer expo-constants@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer expo-constants@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/router-server@57.0.15
+npm warn Found: peer react-native-screens@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer react-native-screens@"*" from the root project
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: @expo/router-server@57.0.15
+npm warn Found: peer react-native-safe-area-context@"*" from the root project
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer react-native-safe-area-context@"*" from the root project
+add lightningcss-win32-arm64-msvc 1.33.0
+add lightningcss-linux-x64-musl 1.33.0
+add lightningcss-linux-x64-gnu 1.33.0
+add lightningcss-linux-arm64-musl 1.33.0
+add lightningcss-linux-arm64-gnu 1.33.0
+add lightningcss-linux-arm-gnueabihf 1.33.0
+add lightningcss-freebsd-x64 1.33.0
+add lightningcss-darwin-x64 1.33.0
+add lightningcss-darwin-arm64 1.33.0
+add lightningcss-android-arm64 1.33.0
+add fsevents 2.3.3
+change expo-router 57.0.30 => 57.0.31
+change expo-linking 57.0.13 => 57.0.14
+change expo-constants 57.0.23 => 57.0.24
+change @expo/fingerprint 0.20.15 => 0.20.16
+remove path-scurry 2.0.2
+remove lru-cache 11.5.3
+remove glob 13.0.6
+{
+  "added": 11,
+  "removed": 3,
+  "changed": 4,
+  "audited": 864,
+  "funding": 84,
+  "audit": {
+    "auditReportVersion": 2,
+    "vulnerabilities": {
+      "@expo/fingerprint": {
+        "name": "@expo/fingerprint",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          "glob",
+          "minimatch"
+        ],
+        "effects": [],
+        "range": ">=0.11.12-canary-20250303-4dba60e",
+        "nodes": [
+          ""
+        ],
+        "fixAvailable": true
+      },
+      "@jest/core": {
+        "name": "@jest/core",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-config"
+        ],
+        "effects": [
+          "jest"
+        ],
+        "range": ">=25.2.0-alpha.86",
+        "nodes": [
+          "node_modules/@jest/core"
+        ],
+        "fixAvailable": {
+          "name": "jest",
+          "version": "25.1.0",
+          "isSemVerMajor": true
+        }
+      },
+      "@testing-library/react-native": {
+        "name": "@testing-library/react-native",
+        "severity": "low",
+        "isDirect": true,
+        "via": [
+          "jest"
+        ],
+        "effects": [
+          "expo-router"
+        ],
+        "range": ">=11.1.0",
+        "nodes": [
+          "node_modules/@testing-library/react-native"
+        ],
+        "fixAvailable": {
+          "name": "@testing-library/react-native",
+          "version": "11.0.0",
+          "isSemVerMajor": true
+        }
+      },
+      "create-jest": {
+        "name": "create-jest",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest-config"
+        ],
+        "effects": [
+          "jest-cli"
+        ],
+        "range": ">=29.7.0",
+        "nodes": [
+          "node_modules/create-jest"
+        ],
+        "fixAvailable": true
+      },
+      "decode-uri-component": {
+        "name": "decode-uri-component",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1147955,
+            "name": "decode-uri-component",
+            "dependency": "decode-uri-component",
+            "title": "decode-uri-component: Denial of service via exponential decoding of malformed percent-encoded input",
+            "url": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400",
+              "CWE-405",
+              "CWE-407",
+              "CWE-1176"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=0.4.2"
+          },
+          {
+            "source": 1243857,
+            "name": "decode-uri-component",
+            "dependency": "decode-uri-component",
+            "title": "decode-uri-component vulnerable to denial of service via quadratic replacement of percent-encoded runs",
+            "url": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f",
+            "severity": "high",
+            "cwe": [
+              "CWE-400",
+              "CWE-407"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": "<=0.5.0"
+          }
+        ],
+        "effects": [
+          "query-string"
+        ],
+        "range": "<=0.5.0",
+        "nodes": [
+          "node_modules/decode-uri-component"
+        ],
+        "fixAvailable": {
+          "name": "expo-router",
+          "version": "58.0.31",
+          "isSemVerMajor": true
+        }
+      },
+      "deepmerge": {
+        "name": "deepmerge",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1243505,
+            "name": "deepmerge",
+            "dependency": "deepmerge",
+            "title": "deepmerge mergeObject() allows prototype poisoning of returned objects",
+            "url": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+            "severity": "low",
+            "cwe": [
+              "CWE-1321"
+            ],
+            "cvss": {
+              "score": 5.3,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+            },
+            "range": ">=4.2.0 <=4.3.1"
+          }
+        ],
+        "effects": [
+          "jest-config"
+        ],
+        "range": ">=4.2.0",
+        "nodes": [
+          "node_modules/deepmerge"
+        ],
+        "fixAvailable": {
+          "name": "jest",
+          "version": "25.1.0",
+          "isSemVerMajor": true
+        }
+      },
+      "expo-router": {
+        "name": "expo-router",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@testing-library/react-native",
+          "query-string"
+        ],
+        "effects": [],
+        "range": "1.2.2 - 3.1.2 || >=5.2.0-canary-20250611-f0afe80",
+        "nodes": [
+          "",
+          "node_modules/expo-router"
+        ],
+        "fixAvailable": {
+          "name": "expo-router",
+          "version": "58.0.31",
+          "isSemVerMajor": true
+        }
+      },
+      "glob": {
+        "name": "glob",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1244013,
+            "name": "glob",
+            "dependency": "glob",
+            "title": "Glob: AbortSignal cancellation bypass allows post-timeout filesystem traversal",
+            "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-400"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=9.0.0 <=14.0.1"
+          },
+          "minimatch"
+        ],
+        "effects": [
+          "@expo/fingerprint"
+        ],
+        "range": "9.0.0 - 14.0.1",
+        "nodes": [
+          ""
+        ],
+        "fixAvailable": true
+      },
+      "jest": {
+        "name": "jest",
+        "severity": "low",
+        "isDirect": true,
+        "via": [
+          "@jest/core",
+          "jest-cli"
+        ],
+        "effects": [
+          "@testing-library/react-native",
+          "jest-watch-typeahead"
+        ],
+        "range": ">=25.2.0-alpha.86",
+        "nodes": [
+          "node_modules/jest"
+        ],
+        "fixAvailable": {
+          "name": "jest",
+          "version": "25.1.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-cli": {
+        "name": "jest-cli",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "@jest/core",
+          "create-jest",
+          "jest-config"
+        ],
+        "effects": [],
+        "range": ">=25.2.0-alpha.86",
+        "nodes": [
+          "node_modules/jest-cli"
+        ],
+        "fixAvailable": true
+      },
+      "jest-config": {
+        "name": "jest-config",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "deepmerge"
+        ],
+        "effects": [
+          "@jest/core",
+          "create-jest",
+          "jest-cli"
+        ],
+        "range": ">=25.2.0-alpha.86",
+        "nodes": [
+          "node_modules/jest-config"
+        ],
+        "fixAvailable": {
+          "name": "jest",
+          "version": "25.1.0",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-expo": {
+        "name": "jest-expo",
+        "severity": "low",
+        "isDirect": true,
+        "via": [
+          "jest-watch-typeahead"
+        ],
+        "effects": [],
+        "range": ">=42.1.0",
+        "nodes": [
+          "node_modules/jest-expo"
+        ],
+        "fixAvailable": {
+          "name": "jest-expo",
+          "version": "42.0.1",
+          "isSemVerMajor": true
+        }
+      },
+      "jest-watch-typeahead": {
+        "name": "jest-watch-typeahead",
+        "severity": "low",
+        "isDirect": false,
+        "via": [
+          "jest"
+        ],
+        "effects": [
+          "jest-expo"
+        ],
+        "range": ">=0.6.0",
+        "nodes": [
+          "node_modules/jest-watch-typeahead"
+        ],
+        "fixAvailable": {
+          "name": "jest-expo",
+          "version": "42.0.1",
+          "isSemVerMajor": true
+        }
+      },
+      "minimatch": {
+        "name": "minimatch",
+        "severity": "moderate",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1244623,
+            "name": "minimatch",
+            "dependency": "minimatch",
+            "title": "minimatch has potential denial of service via globparts amplification",
+            "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+            "severity": "moderate",
+            "cwe": [
+              "CWE-405"
+            ],
+            "cvss": {
+              "score": 0,
+              "vectorString": null
+            },
+            "range": ">=7.0.0 <11.0.1"
+          }
+        ],
+        "effects": [
+          "@expo/fingerprint",
+          "glob"
+        ],
+        "range": "7.0.0 - 11.0.0",
+        "nodes": [
+          ""
+        ],
+        "fixAvailable": true
+      },
+      "query-string": {
+        "name": "query-string",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "decode-uri-component"
+        ],
+        "effects": [
+          "expo-router"
+        ],
+        "range": "5.0.0 - 9.4.1",
+        "nodes": [
+          "node_modules/query-string"
+        ],
+        "fixAvailable": {
+          "name": "expo-router",
+          "version": "58.0.31",
+          "isSemVerMajor": true
+        }
+      }
+    },
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 9,
+        "moderate": 3,
+        "high": 3,
+        "critical": 0,
+        "total": 15
+      },
+      "dependencies": {
+        "prod": 763,
+        "dev": 79,
+        "optional": 12,
+        "peer": 11,
+        "peerOptional": 0,
+        "total": 863
+      }
+    }
+  }
+}

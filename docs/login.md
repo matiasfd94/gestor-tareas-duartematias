@@ -1,33 +1,37 @@
-# Login: interfaz inicial
+# Login conectado al backend
 
-Fecha: 13/11/2026.
+Fecha de actualización: 16/11/2026.
 
-## Cambios
+## Implementación
 
-- Se adaptaron los colores y la presentación del primer parcial.
-- Se agregó app/login.tsx con campos de correo y contraseña.
-- Se incorporó la opción de mostrar u ocultar la contraseña.
-- El tablero se movió de app/index.tsx a app/tasks.tsx.
-- La ruta inicial ahora redirige al login.
-- Se agregó un acceso provisional al gestor, visible solo en desarrollo.
-
-## Estado actual
-
-La autenticación todavía no está implementada. El botón Iniciar sesión está deshabilitado y no se envían credenciales a ningún servicio.
-
-El acceso provisional usa router.push para permitir volver al login durante las pruebas. No representa una sesión autenticada ni un control de acceso.
+- app/login.tsx presenta el formulario y llama al servicio de autenticación.
+- src/services/authService.ts envía las credenciales a POST /api/login y valida la respuesta.
+- src/services/sessionStorage.ts guarda el token mediante SecureStore. No almacena la contraseña.
+- src/services/config.ts obtiene la URL desde EXPO_PUBLIC_API_URL.
+- .env.example documenta la configuración necesaria.
+- Se agregó un botón con ojo para mostrar u ocultar la contraseña.
+- Se retiró el acceso provisional al gestor.
+- Después de un login correcto se navega a /tasks.
 
 ## Verificación
 
+- Login correcto desde el celular: permite ingresar.
+- Contraseña incorrecta: muestra un mensaje y permanece en el login.
+- Campos vacíos: muestra un aviso.
+- Mostrar y ocultar contraseña: funciona.
 - TypeScript: sin errores.
-- Suite existente de Jest: 9 pruebas aprobadas.
-- Pruebas automáticas específicas del login: pendientes.
-- Evidencia visual: testeo/evidencias/login-interfaz-inicial.jpeg.
+- Suite existente: 9 pruebas aprobadas. No cubre automáticamente el login nuevo.
+
+## Entorno local
+
+Laravel se ejecutó en la computadora y el celular accedió mediante la misma red Wi-Fi. La app se probó con Expo Go compatible con SDK 57.
+
+Las variables EXPO_PUBLIC_ son visibles en la aplicación. Solo se configura la URL; no deben contener secretos.
 
 ## Pendientes
 
-- Integrar el backend de Programación 3.
-- Implementar autenticación, sesión y cierre de sesión.
-- Proteger las rutas que requieran autenticación.
-- Retirar el acceso provisional antes de la entrega.
-- Probar el login y la navegación en la APK de preview.
+- Proteger las rutas del gestor.
+- Gestionar sesión vencida y cierre de sesión desde el celular.
+- Conectar las tareas a la API; el tablero todavía utiliza datos simulados.
+- Agregar pruebas específicas del login móvil.
+- Publicar el backend y probar la APK de preview.

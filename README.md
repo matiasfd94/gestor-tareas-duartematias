@@ -1,56 +1,107 @@
-# Gestor de tareas — Taller de debugging y testing (Expo SDK 57)
+# Gestor de tareas
 
-Proyecto **independiente** de React Native + Expo Router + TypeScript para 3.º año. Contiene defectos **intencionales** que permiten enseñar diagnóstico, debugging, pruebas y documentación. No necesita backend: el servicio de tareas es simulado.
+Proyecto de Matías Duarte para la materia EDI.
 
-## Requisitos
-- Node.js **22.13 o superior** (mínimo para SDK 57; usar una versión LTS compatible).
-- npm y VS Code.
-- Emulador Android, Expo Go compatible, o una development build cuya configuración nativa sea compatible.
+Tomé como base el gestor que entregó el profesor. Primero lo instalé y lo probé en el celular. Después corregí los errores del taller, documenté las pruebas y adapté el login del primer parcial.
 
-## Ejecutar
-```bash
-npm install
-npx expo install --fix
-npx expo start --dev-client
+## Objetivo
+
+La aplicación permitirá iniciar sesión y gestionar tareas personales: crearlas, cambiar su estado, editarlas y eliminarlas.
+
+## Qué funciona hasta ahora
+
+- El login del celular se conecta con Laravel.
+- Se muestra un aviso si faltan datos o la contraseña es incorrecta.
+- El token se guarda con SecureStore.
+- Se corrigieron seis errores del taller.
+- Las nueve pruebas actuales del frontend pasan.
+
+El tablero todavía usa tareas simuladas. Falta conectarlo al backend y generar la APK de preview.
+
+## Herramientas utilizadas
+
+- React Native y Expo SDK 57.
+- TypeScript y Expo Router.
+- SecureStore para guardar el token de sesión.
+- Laravel como backend.
+- Jest para las pruebas.
+
+## Qué necesito para ejecutarlo
+
+- Node.js y npm. Usé Node 22.22.3 y npm 10.9.8.
+- Git.
+- Expo Go compatible con SDK 57 en el celular.
+- El celular y la computadora conectados a la misma red Wi-Fi.
+- El backend Laravel funcionando para probar el login.
+
+## Instalación del frontend
+
+Los avances están en la rama develop.
+
+```powershell
+git clone --branch develop https://github.com/matiasfd94/gestor-tareas-duartematias.git
+cd gestor-tareas-duartematias
+npm ci
 ```
-Abrí la development build instalada y conectala al servidor. Si usás Expo Go (con SDK 57 compatible), ejecutá `npx expo start --go`.
 
-> **Muy importante:** una APK de desarrollo creada para otro proyecto no garantiza compatibilidad nativa con este proyecto. Si falta un módulo, la versión de SDK no coincide o la APK no puede abrirlo, generá una development build correspondiente. Las correcciones de JS/TS **no requieren reconstrucción** de una development build compatible.
+## Configuración
 
-## Ejecutar tests
-```bash
+Copiar el archivo de ejemplo:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+En .env, reemplazar IP_DE_TU_COMPUTADORA por la IPv4 de la computadora que ejecuta Laravel:
+
+```dotenv
+EXPO_PUBLIC_API_URL=http://IP_DE_TU_COMPUTADORA:8000/api
+```
+
+La IP se puede consultar con ipconfig. Desde el celular no se debe usar localhost, porque apunta al propio teléfono.
+
+Esta variable contiene solamente la dirección de la API. No se deben guardar contraseñas ni tokens en ella. El archivo .env no se sube a GitHub.
+
+## Cómo levantarlo en local
+
+En la terminal del backend, con su base de datos y usuario de prueba preparados:
+
+```powershell
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+En la terminal del frontend:
+
+```powershell
+npx expo start --go --lan --clear
+```
+
+Abrir Expo Go en el celular y escanear el QR. Mantener ambos servidores abiertos.
+
+Los datos de acceso de prueba se solicitan al responsable del proyecto; no se publican en este README.
+
+## Pruebas
+
+```powershell
+npm run typecheck
 npm test
 ```
-El proyecto contiene pruebas que **deben fallar antes de corregir** algunos errores. Se diseñaron para mostrar cómo un test evidencia un fallo.
 
-## Qué puede hacer la app
-- Listar tareas con un servicio mock de 700 ms.
-- Buscar tareas y filtrarlas por estado.
-- Agregar y eliminar tareas.
-- Cambiar el estado completada/pendiente.
-- Expandir tarjetas para ver el detalle.
-- Simular una caída de servicio (HTTP 503 ficticio).
-- Abrir una pantalla con la consigna.
+Para revisar la compatibilidad de las dependencias:
 
-## Estructura
-```text
-app/                      # Rutas de Expo Router (_layout, inicio, guía)
-src/components/           # TaskCard, StatusTabs
-src/services/             # Servicio mock, sin llamadas reales
-src/types/                # Tipos TypeScript
-src/utils/                # Filtrado y validaciones
-__tests__/                # Pruebas unitarias y de componentes
-INFORME_INCIDENTES.md     # Plantilla a completar
+```powershell
+npx expo-doctor
+npx expo install --check
 ```
 
-## Trabajo del estudiante
-1. Crear un commit de respaldo al iniciar.
-2. Navegar la app y reproducir los comportamientos inesperados.
-3. Corregir **al menos 4 errores** con cambios pequeños y justificados.
-4. Usar DevTools/console y ejecutar `npm test` antes y después.
-5. Completar `INFORME_INCIDENTES.md` y entregar un commit final.
+## Documentación
 
-**Evitar:** buscar soluciones completas o cambiar muchos archivos sin hipótesis de causa raíz.
+- [Login](docs/login.md)
+- [Incidencias corregidas](INFORME_INCIDENTES.md)
+- [Auditoría inicial](docs/testeo/auditoria.md)
+- [Capturas y resultados de pruebas](docs/testeo/evidencias)
+- [Organización, arquitectura y rutas](docs/arquitectura.md)
 
-## Compatibilidad
-Diseñado para SDK 57 / React Native 0.86 / React 19.2.3. `npx expo install --fix` alinea las versiones con el SDK que realmente utiliza la app; no es una orden para actualizar de SDK mayor. No se incluye APK compilada ni `node_modules` en el ZIP.
+## APK de preview
+
+El perfil preview está configurado en eas.json para generar una APK de Android. Todavía falta compilarla, instalarla y probarla.

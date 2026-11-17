@@ -33,6 +33,18 @@ Las solicitudes usan el token obtenido al iniciar sesión.
   - evidencias/tarea-real-completada-despues-recargar.png.
   - evidencias/tarea-real-pendiente-despues-recargar.png.
 
+### Borrado lógico desde el celular
+- Se creó “Prueba de borrado desde el celular”.
+- Al tocar Eliminar, apareció una ventana de confirmación.
+- Al elegir Cancelar, la tarea permaneció en el listado.
+- Al confirmar Eliminar, la tarea desapareció.
+- Después de recargar, la tarea siguió sin aparecer.
+- El backend utiliza borrado lógico mediante deleted_at.
+- Resultado: aprobado.
+- Evidencias:
+  - evidencias/borrado-detalle.jpeg.
+  - evidencias/borrado-confirmacion.jpeg.
+
 ## Archivos modificados
 
 - src/services/taskService.ts: consultas y guardado de tareas mediante la API.
@@ -49,5 +61,4 @@ Las solicitudes usan el token obtenido al iniciar sesión.
 ## Pendientes
 
 - Conectar la edición de los datos de una tarea.
-- Conectar el borrado lógico desde el celular.
 - Completar el manejo de sesión.

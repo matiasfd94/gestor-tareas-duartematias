@@ -145,3 +145,31 @@ export async function updateTaskCompleted(
     completed: task.completed,
   };
 }
+
+export async function deleteTaskById(id: string): Promise<void> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error('Iniciá sesión para eliminar una tarea.');
+  }
+
+  const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.status === 401) {
+    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+  }
+
+  if (response.status === 404) {
+    throw new Error('La tarea ya no está disponible. Recargá el listado.');
+  }
+
+  if (!response.ok) {
+    throw new Error('No pudimos eliminar la tarea. Probá otra vez.');
+  }
+}

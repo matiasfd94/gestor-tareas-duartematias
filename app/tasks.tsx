@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ActivityIndicator, FlatList, Keyboard, Pressable, ScrollView,
+  ActivityIndicator, Alert, FlatList, Keyboard, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { TaskCard } from '../src/components/TaskCard';
@@ -11,6 +11,7 @@ import {
   fetchTasks,
   createTask,
   updateTaskCompleted,
+  deleteTaskById,
 } from '../src/services/taskService';
 import type { Task, TaskStatus } from '../src/types/task';
 import { filterTasks } from '../src/utils/taskFilters';
@@ -26,6 +27,7 @@ export default function TaskManagerScreen() {
   const [feedback, setFeedback] = useState('');
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function loadTasks(simulateFailure = false) {
     setLoading(true);
@@ -119,8 +121,49 @@ export default function TaskManagerScreen() {
   }
 
   function deleteTask(id: string) {
-    setTasks((previous) => previous.filter((task) => task.id !== id));
-    setFeedback('Tarea eliminada.');
+    if (deleting || loading || updating || saving) return;
+
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
+
+    Alert.alert(
+      'Eliminar tarea',
+      `¿Querés eliminar "${task.title}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => void confirmDeleteTask(id),
+        },
+      ]
+    );
+  }
+
+  async function confirmDeleteTask(id: string) {
+    if (deleting || loading || updating || saving) return;
+
+    setDeleting(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      await deleteTaskById(id);
+
+      setTasks((previous) =>
+        previous.filter((task) => task.id !== id)
+      );
+
+      setFeedback('Tarea eliminada correctamente.');
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos eliminar la tarea.'
+      );
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (

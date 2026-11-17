@@ -3,17 +3,12 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityIndicator, Alert, FlatList, Keyboard, Pressable, ScrollView,
-  StyleSheet, Text, TextInput, View,
+  StyleSheet, Text, TextInput, View, Modal,
 } from 'react-native';
 import { TaskCard } from '../src/components/TaskCard';
 import { StatusTabs } from '../src/components/StatusTabs';
-import {
-  fetchTasks,
-  createTask,
-  updateTaskCompleted,
-  deleteTaskById,
-} from '../src/services/taskService';
-import type { Task, TaskStatus } from '../src/types/task';
+import {fetchTasks, createTask, updateTaskCompleted, deleteTaskById, updateTask,} from '../src/services/taskService';
+import type {Task, TaskStatus, TaskPriority,} from '../src/types/task';
 import { filterTasks } from '../src/utils/taskFilters';
 import { isValidTaskTitle } from '../src/utils/taskValidation';
 
@@ -28,6 +23,12 @@ export default function TaskManagerScreen() {
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPriority, setEditPriority] = useState<TaskPriority>('media');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   async function loadTasks(simulateFailure = false) {
     setLoading(true);
@@ -166,13 +167,163 @@ export default function TaskManagerScreen() {
     }
   }
 
+  function startEditing(task: Task) {
+    if (loading || saving || updating || deleting || savingEdit) return;
+
+    setEditingTask(task);
+    setEditTitle(task.title);
+    setEditDescription(task.description);
+    setEditPriority(task.priority);
+    setEditError(null);
+  }
+
+  async function saveEditing() {
+    if (!editingTask || savingEdit) return;
+
+    if (!isValidTaskTitle(editTitle)) {
+      setEditError('Ingresá un título válido.');
+      return;
+    }
+
+    setSavingEdit(true);
+    setEditError(null);
+
+    try {
+      const updatedTask = await updateTask(editingTask.id, {
+        title: editTitle,
+        description: editDescription,
+        priority: editPriority,
+      });
+
+      setTasks((previous) =>
+        previous.map((task) =>
+          task.id === updatedTask.id ? updatedTask : task
+        )
+      );
+
+      setEditingTask(null);
+      setFeedback('Cambios guardados correctamente.');
+      Keyboard.dismiss();
+    } catch (caught) {
+      setEditError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos guardar los cambios.'
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      <Modal
+        visible={editingTask !== null}
+        animationType="slide"
+        onRequestClose={() => {
+          if (!savingEdit) setEditingTask(null);
+        }}
+      >
+        <SafeAreaView style={styles.screen}>
+          <ScrollView
+            contentContainerStyle={styles.listContainer}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.heading}>Editar tarea</Text>
+            <Text style={styles.subtitle}>
+              Modificá los datos y guardá los cambios.
+            </Text>
+
+            <Text style={styles.label}>TÍTULO</Text>
+            <TextInput
+              accessibilityLabel="Título de la tarea"
+              value={editTitle}
+              onChangeText={setEditTitle}
+              maxLength={150}
+              editable={!savingEdit}
+              style={styles.searchInput}
+            />
+
+            <Text style={styles.label}>DESCRIPCIÓN</Text>
+            <TextInput
+              accessibilityLabel="Descripción de la tarea"
+              value={editDescription}
+              onChangeText={setEditDescription}
+              maxLength={2000}
+              editable={!savingEdit}
+              multiline
+              textAlignVertical="top"
+              style={[styles.searchInput, { minHeight: 120 }]}
+            />
+
+            <Text style={styles.label}>PRIORIDAD</Text>
+            <View style={styles.actions}>
+              {(['baja', 'media', 'alta'] as const).map((priority) => (
+                <Pressable
+                  key={priority}
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    selected: editPriority === priority,
+                    disabled: savingEdit,
+                  }}
+                  disabled={savingEdit}
+                  onPress={() => setEditPriority(priority)}
+                  style={[
+                    styles.retryButton,
+                    editPriority === priority && {
+                      backgroundColor: '#147D73',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.retryLabel,
+                      editPriority === priority && { color: '#FFFFFF' },
+                    ]}
+                  >
+                    {priority.toUpperCase()}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {editError ? (
+              <Text accessibilityRole="alert" style={styles.error}>
+                {editError}
+              </Text>
+            ) : null}
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: savingEdit, busy: savingEdit }}
+              disabled={savingEdit}
+              onPress={() => void saveEditing()}
+              style={[
+                styles.addButton,
+                { paddingVertical: 15, opacity: savingEdit ? 0.5 : 1 },
+              ]}
+            >
+              <Text style={styles.addButtonText}>
+                {savingEdit ? 'Guardando...' : 'Guardar cambios'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={savingEdit}
+              onPress={() => setEditingTask(null)}
+              style={[styles.retryButton, { marginTop: 12 }]}
+            >
+              <Text style={styles.retryLabel}>Cancelar</Text>
+            </Pressable>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
       <FlatList
         data={loading ? [] : visibleTasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TaskCard task={item} onToggle={() => toggleTask(item.id)} onDelete={() => deleteTask(item.id)} />
+          <TaskCard task={item} onToggle={() => void toggleTask(item.id)} onDelete={() => deleteTask(item.id)} onEdit={() => startEditing(item)}/>
         )}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContainer}

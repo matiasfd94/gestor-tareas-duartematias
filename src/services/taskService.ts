@@ -173,3 +173,63 @@ export async function deleteTaskById(id: string): Promise<void> {
     throw new Error('No pudimos eliminar la tarea. Probá otra vez.');
   }
 }
+
+export type TaskChanges = {
+  title: string;
+  description: string;
+  priority: TaskPriority;
+};
+
+export async function updateTask(
+  id: string,
+  changes: TaskChanges
+): Promise<Task> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error('Iniciá sesión para editar la tarea.');
+  }
+
+  const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      title: changes.title.trim(),
+      description: changes.description.trim(),
+      priority: changes.priority,
+    }),
+  });
+
+  if (response.status === 401) {
+    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+  }
+
+  if (response.status === 404) {
+    throw new Error('La tarea ya no está disponible. Recargá el listado.');
+  }
+
+  if (response.status === 422) {
+    throw new Error(
+      'Revisá el título, la descripción y la prioridad ingresados.'
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error('No pudimos guardar los cambios. Probá otra vez.');
+  }
+
+  const body: { data: ApiTask } = await response.json();
+  const task = body.data;
+
+  return {
+    id: String(task.id),
+    title: task.title,
+    description: task.description ?? '',
+    priority: task.priority,
+    completed: task.completed,
+  };
+}

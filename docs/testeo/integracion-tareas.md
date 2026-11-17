@@ -45,10 +45,22 @@ Las solicitudes usan el token obtenido al iniciar sesión.
   - evidencias/borrado-detalle.jpeg.
   - evidencias/borrado-confirmacion.jpeg.
 
+### Edición de una tarea
+- Se abrió el detalle de una tarea y se seleccionó Editar tarea.
+- Al modificar el título y cancelar, se conservaron los datos originales.
+- Se modificaron el título, la descripción y la prioridad.
+- Al guardar y recargar el listado, se conservaron los tres cambios.
+- Resultado: aprobado.
+- Evidencias:
+  - evidencias/edicion-boton-detalle.jpeg.
+  - evidencias/edicion-formulario.jpeg.
+  - evidencias/edicion-resultado.jpeg.
+
 ## Archivos modificados
 
 - src/services/taskService.ts: consultas y guardado de tareas mediante la API.
 - app/tasks.tsx: conexión de la pantalla con el servicio y manejo de errores.
+- src/components/TaskCard.tsx: botón para abrir la edición.
 
 ## Verificaciones
 
@@ -60,5 +72,4 @@ Las solicitudes usan el token obtenido al iniciar sesión.
 
 ## Pendientes
 
-- Conectar la edición de los datos de una tarea.
 - Completar el manejo de sesión.

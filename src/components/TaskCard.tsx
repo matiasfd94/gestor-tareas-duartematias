@@ -6,9 +6,15 @@ type TaskCardProps = {
   task: Task;
   onToggle: () => void;
   onDelete: () => void;
+  onEdit?: () => void;
 };
 
-export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
+export function TaskCard({
+    task,
+    onToggle,
+    onDelete,
+    onEdit,
+  }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -46,6 +52,16 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
       {expanded ? (
         <View style={styles.details} testID={`details-${task.id}`}>
           <Text style={styles.description}>{task.description}</Text>
+          {onEdit ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Editar ${task.title}`}
+              onPress={onEdit}
+              style={styles.editButton}
+            >
+              <Text style={styles.editText}>Editar tarea</Text>
+            </Pressable>
+          ) : null}
           <Pressable accessibilityRole="button" onPress={onDelete} style={styles.deleteButton}>
             <Text style={styles.deleteText}>Eliminar tarea</Text>
           </Pressable>
@@ -75,4 +91,17 @@ const styles = StyleSheet.create({
   description: { fontSize: 13, color: '#53627E', lineHeight: 20 },
   deleteButton: { alignSelf: 'flex-start', marginTop: 13, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#FFF0F0', borderRadius: 9 },
   deleteText: { color: '#B63D4E', fontSize: 12, fontWeight: '800' },
+  editButton: {
+    alignSelf: 'flex-start',
+    marginTop: 13,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#E5F2EF',
+    borderRadius: 9,
+  },
+  editText: {
+    color: '#147D73',
+    fontSize: 12,
+    fontWeight: '800',
+  },
 });

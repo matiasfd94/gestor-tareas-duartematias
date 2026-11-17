@@ -1,18 +1,147 @@
-import type { Task } from '../types/task';
+import type { Task, TaskPriority } from '../types/task';
+import { getApiUrl } from './config';
+import { getToken } from './sessionStorage';
 
-const INITIAL_TASKS: Task[] = [
-  { id: 't01', title: 'Validar login', description: 'Comprobar campos vacíos y credenciales incorrectas.', priority: 'alta', completed: false },
-  { id: 't02', title: 'Corregir navegación', description: 'Validar el regreso desde el detalle.', priority: 'media', completed: true },
-  { id: 't03', title: 'Probar API lenta', description: 'Simular una demora y verificar los indicadores de carga.', priority: 'alta', completed: false },
-  { id: 't04', title: 'Generar reporte', description: 'Documentar los fallos detectados y su corrección.', priority: 'baja', completed: false },
-  { id: 't05', title: 'Revisar validaciones', description: 'Asegurar el tratamiento de espacios y datos vacíos.', priority: 'media', completed: true },
-];
+type ApiTask = {
+  id: number;
+  title: string;
+  description: string | null;
+  priority: TaskPriority;
+  completed: boolean;
+};
 
-// Servicio mock: 700 ms de latencia, no requiere conexión ni servidor backend.
-export async function fetchTasks(simulateFailure = false): Promise<Task[]> {
-  await new Promise<void>((resolve) => setTimeout(resolve, 700));
+export async function fetchTasks(
+  simulateFailure = false
+): Promise<Task[]> {
   if (simulateFailure) {
-    throw new Error('HTTP 503: servidor temporalmente indisponible (simulado)');
+    throw new Error(
+      'HTTP 503: servidor temporalmente indisponible (simulado)'
+    );
   }
-  return INITIAL_TASKS.map((task) => ({ ...task }));
+
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error('Iniciá sesión para consultar tus tareas.');
+  }
+
+  const response = await fetch(`${getApiUrl()}/tasks`, {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.status === 401) {
+    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+  }
+
+  if (!response.ok) {
+    throw new Error('No pudimos consultar las tareas del servidor.');
+  }
+
+  const body: { data: ApiTask[] } = await response.json();
+
+  if (!Array.isArray(body.data)) {
+    throw new Error('El servidor devolvió un listado inválido.');
+  }
+
+  return body.data.map((task) => ({
+    id: String(task.id),
+    title: task.title,
+    description: task.description ?? '',
+    priority: task.priority,
+    completed: task.completed,
+  }));
+}
+
+export async function createTask(title: string): Promise<Task> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error('Iniciá sesión para crear una tarea.');
+  }
+
+  const response = await fetch(`${getApiUrl()}/tasks`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      title: title.trim(),
+      description: null,
+      priority: 'media',
+    }),
+  });
+
+  if (response.status === 401) {
+    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+  }
+
+  if (response.status === 422) {
+    throw new Error(
+      'Ingresá un título válido de hasta 150 caracteres.'
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error('No pudimos guardar la tarea. Probá otra vez.');
+  }
+
+  const body: { data: ApiTask } = await response.json();
+  const task = body.data;
+
+  return {
+    id: String(task.id),
+    title: task.title,
+    description: task.description ?? '',
+    priority: task.priority,
+    completed: task.completed,
+  };
+}
+
+export async function updateTaskCompleted(
+  id: string,
+  completed: boolean
+): Promise<Task> {
+  const token = await getToken();
+
+  if (!token) {
+    throw new Error('Iniciá sesión para actualizar la tarea.');
+  }
+
+  const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ completed }),
+  });
+
+  if (response.status === 401) {
+    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+  }
+
+  if (response.status === 404) {
+    throw new Error('La tarea ya no está disponible. Recargá el listado.');
+  }
+
+  if (!response.ok) {
+    throw new Error('No pudimos actualizar la tarea. Probá otra vez.');
+  }
+
+  const body: { data: ApiTask } = await response.json();
+  const task = body.data;
+
+  return {
+    id: String(task.id),
+    title: task.title,
+    description: task.description ?? '',
+    priority: task.priority,
+    completed: task.completed,
+  };
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -7,7 +7,11 @@ import {
 } from 'react-native';
 import { TaskCard } from '../src/components/TaskCard';
 import { StatusTabs } from '../src/components/StatusTabs';
-import { fetchTasks } from '../src/services/taskService';
+import {
+  fetchTasks,
+  createTask,
+  updateTaskCompleted,
+} from '../src/services/taskService';
 import type { Task, TaskStatus } from '../src/types/task';
 import { filterTasks } from '../src/utils/taskFilters';
 import { isValidTaskTitle } from '../src/utils/taskValidation';
@@ -20,7 +24,8 @@ export default function TaskManagerScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
-  const nextId = useRef(100);
+  const [saving, setSaving] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   async function loadTasks(simulateFailure = false) {
     setLoading(true);
@@ -45,32 +50,72 @@ export default function TaskManagerScreen() {
   const total = tasks.length;
   const completed = tasks.filter((task) => task.completed).length;
 
-  function toggleTask(id: string) {
-    setTasks((previous) =>
-      previous.map((task) =>
-        task.id === id
-          ? { ...task, completed: !task.completed }
-          : task
-      )
-    );
+  async function toggleTask(id: string) {
+    if (updating || loading) return;
+
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
+
+    setUpdating(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      const updatedTask = await updateTaskCompleted(
+        id,
+        !task.completed
+      );
+
+      setTasks((previous) =>
+        previous.map((item) =>
+          item.id === id ? updatedTask : item
+        )
+      );
+
+      setFeedback(
+        updatedTask.completed
+          ? 'Tarea marcada como completada.'
+          : 'Tarea marcada como pendiente.'
+      );
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos actualizar la tarea.'
+      );
+    } finally {
+      setUpdating(false);
+    }
   }
 
-  function addTask() {
+  async function addTask() {
+    if (saving || loading) return;
+
     if (!isValidTaskTitle(newTitle)) {
       setFeedback('Ingresá un nombre válido para continuar.');
       return;
     }
-    const task: Task = {
-      id: `nuevo-${nextId.current++}`,
-      title: newTitle,
-      description: 'Tarea creada durante el taller de debugging.',
-      priority: 'media',
-      completed: false,
-    };
-    setTasks((previous) => [task, ...previous]);
-    setNewTitle('');
-    setFeedback('Tarea agregada.');
-    Keyboard.dismiss();
+
+    setSaving(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      const task = await createTask(newTitle);
+
+      setTasks((previous) => [task, ...previous]);
+      setNewTitle('');
+      setFeedback('Tarea guardada correctamente.');
+      Keyboard.dismiss();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos guardar la tarea. Probá otra vez.'
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   function deleteTask(id: string) {
@@ -82,7 +127,7 @@ export default function TaskManagerScreen() {
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <FlatList
         data={loading ? [] : visibleTasks}
-        keyExtractor={(_item, index) => String(index)}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TaskCard task={item} onToggle={() => toggleTask(item.id)} onDelete={() => deleteTask(item.id)} />
         )}
@@ -125,9 +170,20 @@ export default function TaskManagerScreen() {
                 onChangeText={setNewTitle}
                 returnKeyType="done"
                 style={styles.addInput}
+                maxLength={150}
+                editable={!saving}
               />
-              <Pressable accessibilityRole="button" testID="add-task-button" style={styles.addButton} onPress={addTask}>
-                <Text style={styles.addButtonText}>Agregar</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: saving || loading, busy: saving }}
+                testID="add-task-button"
+                style={[styles.addButton, { opacity: saving || loading ? 0.5 : 1 }]}
+                disabled={saving || loading}
+                onPress={() => void addTask()}
+              >
+                <Text style={styles.addButtonText}>
+                  {saving ? 'Guardando...' : 'Agregar'}
+                </Text>
               </Pressable>
             </View>
             {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}

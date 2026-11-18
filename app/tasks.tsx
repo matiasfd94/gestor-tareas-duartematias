@@ -11,6 +11,7 @@ import {fetchTasks, createTask, updateTaskCompleted, deleteTaskById, updateTask,
 import type {Task, TaskStatus, TaskPriority,} from '../src/types/task';
 import { filterTasks } from '../src/utils/taskFilters';
 import { isValidTaskTitle } from '../src/utils/taskValidation';
+import { logout, getCurrentUser } from '../src/services/authService';
 
 export default function TaskManagerScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,6 +30,10 @@ export default function TaskManagerScreen() {
   const [editPriority, setEditPriority] = useState<TaskPriority>('media');
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [sessionVerified, setSessionVerified] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   async function loadTasks(simulateFailure = false) {
     setLoading(true);
@@ -45,8 +50,33 @@ export default function TaskManagerScreen() {
     }
   } 
 
+  async function verifySession() {
+    setCheckingSession(true);
+    setSessionError(null);
+
+    try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
+
+      setSessionVerified(true);
+      await loadTasks();
+    } catch (caught) {
+      setSessionError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos verificar la sesión.'
+      );
+    } finally {
+      setCheckingSession(false);
+    }
+  }
+
   useEffect(() => {
-    void loadTasks();
+    void verifySession();
   }, []);
 
   const visibleTasks = useMemo(() => filterTasks(tasks, query, status),[tasks, query, status]);
@@ -215,6 +245,68 @@ export default function TaskManagerScreen() {
     }
   }
 
+  async function handleLogout() {
+    if (
+      loggingOut || loading || saving ||
+      updating || deleting || savingEdit
+    ) return;
+
+    setLoggingOut(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      await logout();
+      setTasks([]);
+      router.replace('/login');
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos cerrar la sesión.'
+      );
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
+  if (!sessionVerified) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.listContainer}>
+          <Text style={styles.heading}>Gestor de tareas</Text>
+
+          {checkingSession ? (
+            <View style={styles.loading}>
+              <ActivityIndicator color="#147D73" size="large" />
+              <Text style={styles.loadingLabel}>
+                Verificando sesión...
+              </Text>
+            </View>
+          ) : sessionError ? (
+            <>
+              <Text accessibilityRole="alert" style={styles.error}>
+                {sessionError}
+              </Text>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void verifySession()}
+                style={styles.retryButton}
+              >
+                <Text style={styles.retryLabel}>Reintentar</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text style={styles.loadingLabel}>
+              Volviendo al inicio de sesión...
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <Modal
@@ -337,6 +429,27 @@ export default function TaskManagerScreen() {
             </View>
             <Text style={styles.heading}>Gestor de tareas</Text>
             <Text style={styles.subtitle}>Proyecto de clase para diagnosticar errores reales.</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{
+                disabled: loggingOut || loading || saving ||
+                  updating || deleting || savingEdit,
+                busy: loggingOut,
+              }}
+              disabled={
+                loggingOut || loading || saving ||
+                updating || deleting || savingEdit
+              }
+              onPress={() => void handleLogout()}
+              style={[
+                styles.retryButton,
+                { alignSelf: 'flex-end', marginBottom: 16 },
+              ]}
+            >
+              <Text style={styles.retryLabel}>
+                {loggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+              </Text>
+            </Pressable>
 
             <View style={styles.statsRow}>
               <View style={[styles.stat, styles.statDark]}>

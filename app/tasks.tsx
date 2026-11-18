@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { TaskCard } from '../src/components/TaskCard';
 import { StatusTabs } from '../src/components/StatusTabs';
-import {fetchTasks, createTask, updateTaskCompleted, deleteTaskById, updateTask,} from '../src/services/taskService';
+import {fetchTasks, createTask, updateTaskCompleted, deleteTaskById, updateTask, SessionExpiredError,} from '../src/services/taskService';
 import type {Task, TaskStatus, TaskPriority,} from '../src/types/task';
 import { filterTasks } from '../src/utils/taskFilters';
 import { isValidTaskTitle } from '../src/utils/taskValidation';
@@ -35,6 +35,27 @@ export default function TaskManagerScreen() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
+  
+  function handleSessionError(caught: unknown): boolean {
+    if (!(caught instanceof SessionExpiredError)) return false;
+
+    setTasks([]);
+    setEditingTask(null);
+    setSessionVerified(false);
+    setError(null);
+    setFeedback('');
+
+    router.replace('/login');
+
+    Alert.alert(
+      'Sesión finalizada',
+      'Tu sesión venció o dejó de ser válida. Volvé a iniciar sesión.'
+    );
+
+    return true;
+  }
+
+
   async function loadTasks(simulateFailure = false) {
     setLoading(true);
     setError(null);
@@ -43,6 +64,7 @@ export default function TaskManagerScreen() {
       const records = await fetchTasks(simulateFailure);
       setTasks(records);
     } catch (caught) {
+      if (handleSessionError(caught)) return;
       console.error('[taskService] No se cargaron las tareas', caught);
       setError('No pudimos cargar las tareas. Probá otra vez.');
     } finally {
@@ -111,6 +133,7 @@ export default function TaskManagerScreen() {
           : 'Tarea marcada como pendiente.'
       );
     } catch (caught) {
+      if (handleSessionError(caught)) return;
       setError(
         caught instanceof Error
           ? caught.message
@@ -141,6 +164,7 @@ export default function TaskManagerScreen() {
       setFeedback('Tarea guardada correctamente.');
       Keyboard.dismiss();
     } catch (caught) {
+      if (handleSessionError(caught)) return;
       setError(
         caught instanceof Error
           ? caught.message
@@ -187,6 +211,7 @@ export default function TaskManagerScreen() {
 
       setFeedback('Tarea eliminada correctamente.');
     } catch (caught) {
+      if (handleSessionError(caught)) return;
       setError(
         caught instanceof Error
           ? caught.message
@@ -235,6 +260,7 @@ export default function TaskManagerScreen() {
       setFeedback('Cambios guardados correctamente.');
       Keyboard.dismiss();
     } catch (caught) {
+      if (handleSessionError(caught)) return;
       setEditError(
         caught instanceof Error
           ? caught.message

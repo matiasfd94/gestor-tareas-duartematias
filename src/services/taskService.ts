@@ -1,6 +1,13 @@
 import type { Task, TaskPriority } from '../types/task';
 import { getApiUrl } from './config';
-import { getToken } from './sessionStorage';
+import { getToken, clearToken } from './sessionStorage';
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('La sesión ya no es válida. Volvé a iniciar sesión.');
+    this.name = 'SessionExpiredError';
+  }
+}
 
 type ApiTask = {
   id: number;
@@ -22,7 +29,7 @@ export async function fetchTasks(
   const token = await getToken();
 
   if (!token) {
-    throw new Error('Iniciá sesión para consultar tus tareas.');
+    throw new SessionExpiredError();
   }
 
   const response = await fetch(`${getApiUrl()}/tasks`, {
@@ -33,7 +40,8 @@ export async function fetchTasks(
   });
 
   if (response.status === 401) {
-    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+    await clearToken();
+    throw new SessionExpiredError();
   }
 
   if (!response.ok) {
@@ -59,7 +67,7 @@ export async function createTask(title: string): Promise<Task> {
   const token = await getToken();
 
   if (!token) {
-    throw new Error('Iniciá sesión para crear una tarea.');
+    throw new SessionExpiredError();
   }
 
   const response = await fetch(`${getApiUrl()}/tasks`, {
@@ -77,7 +85,8 @@ export async function createTask(title: string): Promise<Task> {
   });
 
   if (response.status === 401) {
-    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+    await clearToken();
+    throw new SessionExpiredError();
   }
 
   if (response.status === 422) {
@@ -109,7 +118,7 @@ export async function updateTaskCompleted(
   const token = await getToken();
 
   if (!token) {
-    throw new Error('Iniciá sesión para actualizar la tarea.');
+    throw new SessionExpiredError();
   }
 
   const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
@@ -123,7 +132,8 @@ export async function updateTaskCompleted(
   });
 
   if (response.status === 401) {
-    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+    await clearToken();
+    throw new SessionExpiredError();
   }
 
   if (response.status === 404) {
@@ -150,7 +160,7 @@ export async function deleteTaskById(id: string): Promise<void> {
   const token = await getToken();
 
   if (!token) {
-    throw new Error('Iniciá sesión para eliminar una tarea.');
+    throw new SessionExpiredError();
   }
 
   const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
@@ -162,7 +172,8 @@ export async function deleteTaskById(id: string): Promise<void> {
   });
 
   if (response.status === 401) {
-    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+    await clearToken();
+    throw new SessionExpiredError();
   }
 
   if (response.status === 404) {
@@ -187,7 +198,7 @@ export async function updateTask(
   const token = await getToken();
 
   if (!token) {
-    throw new Error('Iniciá sesión para editar la tarea.');
+    throw new SessionExpiredError();
   }
 
   const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
@@ -205,7 +216,8 @@ export async function updateTask(
   });
 
   if (response.status === 401) {
-    throw new Error('La sesión venció. Volvé a iniciar sesión.');
+    await clearToken();
+    throw new SessionExpiredError();
   }
 
   if (response.status === 404) {

@@ -454,7 +454,22 @@ export default function TaskManagerScreen() {
               </Pressable>
             </View>
             <Text style={styles.heading}>Gestor de tareas</Text>
-            <Text style={styles.subtitle}>Proyecto de clase para diagnosticar errores reales.</Text>
+            <Text style={styles.subtitle}>Organiza tus tareas personales.</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir mi perfil"
+              disabled={
+                loading || saving || updating ||
+                deleting || savingEdit || loggingOut
+              }
+              onPress={() => router.replace('/profile')}
+              style={[
+                styles.retryButton,
+                { alignSelf: 'flex-end', marginBottom: 12 },
+              ]}
+            >
+              <Text style={styles.retryLabel}>Mi perfil</Text>
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{

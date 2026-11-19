@@ -11,7 +11,7 @@ import {fetchTasks, createTask, updateTaskCompleted, deleteTaskById, updateTask,
 import type {Task, TaskStatus, TaskPriority,} from '../src/types/task';
 import { filterTasks } from '../src/utils/taskFilters';
 import { isValidTaskTitle } from '../src/utils/taskValidation';
-import { logout, getCurrentUser } from '../src/services/authService';
+import {logout, getCurrentUser, type AuthUser,} from '../src/services/authService';
 
 export default function TaskManagerScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -34,6 +34,7 @@ export default function TaskManagerScreen() {
   const [sessionVerified, setSessionVerified] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
   
   function handleSessionError(caught: unknown): boolean {
@@ -84,6 +85,7 @@ export default function TaskManagerScreen() {
         return;
       }
 
+      setCurrentUser(user);
       setSessionVerified(true);
       await loadTasks();
     } catch (caught) {
@@ -430,7 +432,15 @@ export default function TaskManagerScreen() {
               accessibilityRole="button"
               disabled={savingEdit}
               onPress={() => setEditingTask(null)}
-              style={[styles.retryButton, { marginTop: 12 }]}
+              style={[
+                styles.retryButton,
+                {
+                  flex: 0,
+                  marginTop: 12,
+                  paddingVertical: 15,
+                  justifyContent: 'center',
+                },
+              ]}
             >
               <Text style={styles.retryLabel}>Cancelar</Text>
             </Pressable>
@@ -447,29 +457,35 @@ export default function TaskManagerScreen() {
         contentContainerStyle={styles.listContainer}
         ListHeaderComponent={
           <>
-            <View style={styles.eyebrowRow}>
-              <Text style={styles.eyebrow}>LABORATORIO · REACT NATIVE</Text>
-              <Pressable accessibilityRole="button" onPress={() => router.push('/guia')} style={styles.helpButton}>
+            <Text style={styles.heading}>Gestor de tareas</Text>
+            <Text style={styles.subtitle}>
+              Organizá tus tareas personales
+            </Text>
+
+            <View style={styles.userRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir perfil de ${currentUser?.name ?? 'usuario'}`}
+                disabled={
+                  loading || saving || updating ||
+                  deleting || savingEdit || loggingOut
+                }
+                onPress={() => router.replace('/profile')}
+                style={styles.userButton}
+              >
+                <Text style={styles.userName}>
+                  {currentUser?.name ?? 'Mi perfil'} 
+                </Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/guia')}
+                style={styles.helpButton}
+              >
                 <Text style={styles.helpText}>Guía ↗</Text>
               </Pressable>
             </View>
-            <Text style={styles.heading}>Gestor de tareas</Text>
-            <Text style={styles.subtitle}>Organiza tus tareas personales.</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Abrir mi perfil"
-              disabled={
-                loading || saving || updating ||
-                deleting || savingEdit || loggingOut
-              }
-              onPress={() => router.replace('/profile')}
-              style={[
-                styles.retryButton,
-                { alignSelf: 'flex-end', marginBottom: 12 },
-              ]}
-            >
-              <Text style={styles.retryLabel}>Mi perfil</Text>
-            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{
@@ -573,37 +589,214 @@ export default function TaskManagerScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F5F7FB' },
-  listContainer: { paddingHorizontal: 19, paddingTop: 18, paddingBottom: 55, flexGrow: 1 },
-  eyebrowRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  eyebrow: { fontSize: 10, letterSpacing: 1.5, fontWeight: '900', color: '#168879' },
-  helpButton: { backgroundColor: '#E5EFEC', paddingVertical: 8, paddingHorizontal: 11, borderRadius: 9 },
-  helpText: { fontWeight: '800', color: '#187A71', fontSize: 12 },
-  heading: { fontSize: 30, fontWeight: '900', color: '#172743', marginTop: 12 },
-  subtitle: { color: '#75829A', fontSize: 13, marginTop: 7, marginBottom: 21, lineHeight: 20 },
-  statsRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
-  stat: { backgroundColor: '#FFFFFF', padding: 12, borderRadius: 15, flex: 1, borderColor: '#E7EBF3', borderWidth: 1 },
-  statDark: { backgroundColor: '#192C4D', borderColor: '#192C4D' },
-  statLabel: { fontWeight: '800', color: '#8390A5', fontSize: 9, letterSpacing: 0.35 },
-  statLabelLight: { fontWeight: '800', color: '#B3C4DD', fontSize: 9, letterSpacing: 0.35 },
-  statNumber: { marginTop: 8, color: '#1B3150', fontWeight: '900', fontSize: 25 },
-  statNumberLight: { marginTop: 8, color: '#FFFFFF', fontWeight: '900', fontSize: 25 },
-  label: { fontSize: 11, color: '#384E6D', fontWeight: '900', letterSpacing: 1.1, marginBottom: 10 },
-  sectionHeading: { marginTop: 12 },
-  addRow: { flexDirection: 'row', gap: 8, marginBottom: 7 },
-  addInput: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E6F0', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, color: '#1D3151', fontSize: 13, minWidth: 0 },
-  addButton: { backgroundColor: '#147D73', paddingHorizontal: 13, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  addButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 12 },
-  feedback: { color: '#147D73', fontSize: 12, marginBottom: 8 },
-  searchInput: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E0E6F0', borderRadius: 12, paddingHorizontal: 13, paddingVertical: 13, color: '#1D3151', fontSize: 13, marginBottom: 12 },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: 7, marginBottom: 13 },
-  retryButton: { paddingVertical: 11, paddingHorizontal: 11, backgroundColor: '#E5F2EF', borderRadius: 10, flex: 1, alignItems: 'center' },
-  retryLabel: { fontSize: 11, color: '#18776D', fontWeight: '800' },
-  simulateButton: { paddingVertical: 11, paddingHorizontal: 10, backgroundColor: '#FDEBEB', borderRadius: 10, flex: 1, alignItems: 'center' },
-  simulateLabel: { fontSize: 11, color: '#B84F4F', fontWeight: '800' },
-  error: { color: '#A53D49', backgroundColor: '#FFF0F0', padding: 11, borderRadius: 10, fontWeight: '700', marginBottom: 10, fontSize: 12 },
-  loading: { alignItems: 'center', paddingTop: 24, paddingBottom: 18, gap: 10 },
-  loadingLabel: { color: '#75829A', fontSize: 12 },
-  empty: { marginTop: 30, textAlign: 'center', color: '#8490A5', lineHeight: 20, fontSize: 13 },
-  footer: { textAlign: 'center', color: '#A4AFC1', fontSize: 10, paddingTop: 30 },
+  screen: {
+    flex: 1,
+    backgroundColor: '#0b1326',
+  },
+  listContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 55,
+    flexGrow: 1,
+  },
+  heading: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#dae2fd',
+    marginTop: 4,
+  },
+  subtitle: {
+    color: '#bbcabf',
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 12,
+    lineHeight: 21,
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 12,
+  },
+  userButton: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  userName: {
+    color: '#4edea3',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  helpButton: {
+    backgroundColor: '#171f33',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  helpText: {
+    fontWeight: '700',
+    color: '#4edea3',
+    fontSize: 12,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+  },
+  stat: {
+    backgroundColor: '#171f33',
+    padding: 12,
+    borderRadius: 15,
+    flex: 1,
+    borderColor: '#2d3449',
+    borderWidth: 1,
+  },
+  statDark: {
+    backgroundColor: '#143a30',
+    borderColor: '#32735c',
+  },
+  statLabel: {
+    fontWeight: '700',
+    color: '#bbcabf',
+    fontSize: 9,
+    letterSpacing: 0.35,
+  },
+  statLabelLight: {
+    fontWeight: '700',
+    color: '#b5f1d5',
+    fontSize: 9,
+    letterSpacing: 0.35,
+  },
+  statNumber: {
+    marginTop: 8,
+    color: '#dae2fd',
+    fontWeight: '800',
+    fontSize: 25,
+  },
+  statNumberLight: {
+    marginTop: 8,
+    color: '#4edea3',
+    fontWeight: '800',
+    fontSize: 25,
+  },
+  label: {
+    fontSize: 11,
+    color: '#bbcabf',
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    marginBottom: 10,
+  },
+  sectionHeading: {
+    marginTop: 20,
+  },
+  addRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 7,
+  },
+  addInput: {
+    flex: 1,
+    backgroundColor: '#171f33',
+    borderWidth: 1,
+    borderColor: '#2d3449',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+    color: '#dae2fd',
+    fontSize: 14,
+    minWidth: 0,
+  },
+  addButton: {
+    backgroundColor: '#4edea3',
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#003824',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  feedback: {
+    color: '#4edea3',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  searchInput: {
+    backgroundColor: '#171f33',
+    borderWidth: 1,
+    borderColor: '#2d3449',
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 13,
+    color: '#dae2fd',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 7,
+    marginBottom: 13,
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#172e2a',
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+  },
+  retryLabel: {
+    fontSize: 12,
+    color: '#4edea3',
+    fontWeight: '700',
+  },
+  simulateButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    backgroundColor: '#3b202b',
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+  },
+  simulateLabel: {
+    fontSize: 12,
+    color: '#ffb4ab',
+    fontWeight: '700',
+  },
+  error: {
+    color: '#ffdad6',
+    backgroundColor: '#5c1821',
+    padding: 12,
+    borderRadius: 10,
+    fontWeight: '600',
+    marginBottom: 10,
+    fontSize: 12,
+  },
+  loading: {
+    alignItems: 'center',
+    paddingTop: 24,
+    paddingBottom: 18,
+    gap: 10,
+  },
+  loadingLabel: {
+    color: '#bbcabf',
+    fontSize: 12,
+  },
+  empty: {
+    marginTop: 30,
+    textAlign: 'center',
+    color: '#bbcabf',
+    lineHeight: 20,
+    fontSize: 13,
+  },
+  footer: {
+    textAlign: 'center',
+    color: '#a4afc1',
+    fontSize: 10,
+    paddingTop: 30,
+  },
 });

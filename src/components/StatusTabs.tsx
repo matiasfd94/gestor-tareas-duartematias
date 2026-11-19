@@ -28,9 +28,22 @@ export function StatusTabs({ current, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flexDirection: 'row', backgroundColor: '#E7ECF5', padding: 4, borderRadius: 14, gap: 3, marginBottom: 13 },
-  button: { flex: 1, borderRadius: 11, paddingVertical: 10, justifyContent: 'center', alignItems: 'center' },
-  active: { backgroundColor: '#FFFFFF' },
-  text: { color: '#67748B', fontWeight: '700', fontSize: 11 },
-  textActive: { color: '#213B63' },
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#171f33',
+    padding: 4,
+    borderRadius: 14,
+    gap: 3,
+    marginBottom: 13,
+  },
+  button: {
+    flex: 1,
+    borderRadius: 11,
+    paddingVertical: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  active: { backgroundColor: '#4edea3' },
+  text: { color: '#bbcabf', fontWeight: '700', fontSize: 11 },
+  textActive: { color: '#003824' },
 });

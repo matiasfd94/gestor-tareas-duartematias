@@ -15,7 +15,27 @@ type ApiTask = {
   description: string | null;
   priority: TaskPriority;
   completed: boolean;
+  categories?: string | null;
+  notes?: string | null;
+  due_date?: string | null;
+  slug?: string;
+  completed_at?: string | null;
 };
+
+function mapTask(task: ApiTask): Task {
+  return {
+    id: String(task.id),
+    title: task.title,
+    description: task.description ?? '',
+    priority: task.priority,
+    completed: task.completed,
+    categories: task.categories ?? null,
+    notes: task.notes ?? null,
+    due_date: task.due_date ?? null,
+    slug: task.slug,
+    completed_at: task.completed_at ?? null,
+  };
+}
 
 export async function fetchTasks(
   simulateFailure = false
@@ -54,16 +74,17 @@ export async function fetchTasks(
     throw new Error('El servidor devolvió un listado inválido.');
   }
 
-  return body.data.map((task) => ({
-    id: String(task.id),
-    title: task.title,
-    description: task.description ?? '',
-    priority: task.priority,
-    completed: task.completed,
-  }));
+  return body.data.map(mapTask);
 }
 
-export async function createTask(title: string): Promise<Task> {
+export async function createTask(
+  title: string,
+  details: {
+    categories?: string;
+    notes?: string;
+    due_date?: string;
+  } = {}
+): Promise<Task> {
   const token = await getToken();
 
   if (!token) {
@@ -81,6 +102,9 @@ export async function createTask(title: string): Promise<Task> {
       title: title.trim(),
       description: null,
       priority: 'media',
+      categories: details.categories?.trim() || null,
+      notes: details.notes?.trim() || null,
+      due_date: details.due_date?.trim() || null,
     }),
   });
 
@@ -91,7 +115,7 @@ export async function createTask(title: string): Promise<Task> {
 
   if (response.status === 422) {
     throw new Error(
-      'Ingresá un título válido de hasta 150 caracteres.'
+      'Revisá los campos: el título admite hasta 150 caracteres y el vencimiento debe ser una fecha válida con formato AAAA-MM-DD.'
     );
   }
 
@@ -102,13 +126,7 @@ export async function createTask(title: string): Promise<Task> {
   const body: { data: ApiTask } = await response.json();
   const task = body.data;
 
-  return {
-    id: String(task.id),
-    title: task.title,
-    description: task.description ?? '',
-    priority: task.priority,
-    completed: task.completed,
-  };
+  return mapTask(task);
 }
 
 export async function updateTaskCompleted(
@@ -147,13 +165,7 @@ export async function updateTaskCompleted(
   const body: { data: ApiTask } = await response.json();
   const task = body.data;
 
-  return {
-    id: String(task.id),
-    title: task.title,
-    description: task.description ?? '',
-    priority: task.priority,
-    completed: task.completed,
-  };
+  return mapTask(task);
 }
 
 export async function deleteTaskById(id: string): Promise<void> {
@@ -189,6 +201,9 @@ export type TaskChanges = {
   title: string;
   description: string;
   priority: TaskPriority;
+  categories?: string;
+  notes?: string;
+  due_date?: string;
 };
 
 export async function updateTask(
@@ -212,6 +227,15 @@ export async function updateTask(
       title: changes.title.trim(),
       description: changes.description.trim(),
       priority: changes.priority,
+      categories: changes.categories === undefined
+        ? undefined
+        : changes.categories.trim() || null,
+      notes: changes.notes === undefined
+        ? undefined
+        : changes.notes.trim() || null,
+      due_date: changes.due_date === undefined
+        ? undefined
+        : changes.due_date.trim() || null,
     }),
   });
 
@@ -226,7 +250,7 @@ export async function updateTask(
 
   if (response.status === 422) {
     throw new Error(
-      'Revisá el título, la descripción y la prioridad ingresados.'
+      'Revisá los campos. El vencimiento debe tener formato AAAA-MM-DD y ser una fecha válida.'
     );
   }
 
@@ -237,11 +261,5 @@ export async function updateTask(
   const body: { data: ApiTask } = await response.json();
   const task = body.data;
 
-  return {
-    id: String(task.id),
-    title: task.title,
-    description: task.description ?? '',
-    priority: task.priority,
-    completed: task.completed,
-  };
+  return mapTask(task);
 }

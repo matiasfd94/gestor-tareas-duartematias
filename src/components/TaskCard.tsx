@@ -52,6 +52,26 @@ export function TaskCard({
       {expanded ? (
         <View style={styles.details} testID={`details-${task.id}`}>
           <Text style={styles.description}>{task.description}</Text>
+          {task.categories ? (
+            <Text style={[styles.description, { marginTop: 10 }]}>
+              <Text style={{ fontWeight: '700' }}>Categoría: </Text>
+              {task.categories}
+            </Text>
+          ) : null}
+
+          {task.notes ? (
+            <Text style={[styles.description, { marginTop: 10 }]}>
+              <Text style={{ fontWeight: '700' }}>Notas: </Text>
+              {task.notes}
+            </Text>
+          ) : null}
+
+          {task.due_date ? (
+            <Text style={[styles.description, { marginTop: 10 }]}>
+              <Text style={{ fontWeight: '700' }}>Vencimiento: </Text>
+              {task.due_date.split('-').reverse().join('/')}
+            </Text>
+          ) : null}
           {onEdit ? (
             <Pressable
               accessibilityRole="button"

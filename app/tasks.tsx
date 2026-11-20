@@ -18,6 +18,9 @@ export default function TaskManagerScreen() {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<TaskStatus>('todas');
   const [newTitle, setNewTitle] = useState('');
+  const [newCategories, setNewCategories] = useState('');
+  const [newNotes, setNewNotes] = useState('');
+  const [newDueDate, setNewDueDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
@@ -28,6 +31,9 @@ export default function TaskManagerScreen() {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editPriority, setEditPriority] = useState<TaskPriority>('media');
+  const [editCategories, setEditCategories] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editDueDate, setEditDueDate] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -159,10 +165,17 @@ export default function TaskManagerScreen() {
     setFeedback('');
 
     try {
-      const task = await createTask(newTitle);
+      const task = await createTask(newTitle, {
+        categories: newCategories,
+        notes: newNotes,
+        due_date: newDueDate,
+      });
 
       setTasks((previous) => [task, ...previous]);
       setNewTitle('');
+      setNewCategories('');
+      setNewNotes('');
+      setNewDueDate('');
       setFeedback('Tarea guardada correctamente.');
       Keyboard.dismiss();
     } catch (caught) {
@@ -231,6 +244,9 @@ export default function TaskManagerScreen() {
     setEditTitle(task.title);
     setEditDescription(task.description);
     setEditPriority(task.priority);
+    setEditCategories(task.categories ?? '');
+    setEditNotes(task.notes ?? '');
+    setEditDueDate(task.due_date ?? '');
     setEditError(null);
   }
 
@@ -250,6 +266,9 @@ export default function TaskManagerScreen() {
         title: editTitle,
         description: editDescription,
         priority: editPriority,
+        categories: editCategories,
+        notes: editNotes,
+        due_date: editDueDate,
       });
 
       setTasks((previous) =>
@@ -374,6 +393,46 @@ export default function TaskManagerScreen() {
               multiline
               textAlignVertical="top"
               style={[styles.searchInput, { minHeight: 120 }]}
+            />
+
+            <Text style={styles.label}>CATEGORÍA</Text>
+            <TextInput
+              accessibilityLabel="Categoría de la tarea"
+              placeholder="Ej.: Estudio, trabajo o personal"
+              placeholderTextColor="#95A0B3"
+              value={editCategories}
+              onChangeText={setEditCategories}
+              maxLength={255}
+              editable={!savingEdit}
+              style={styles.searchInput}
+            />
+
+            <Text style={styles.label}>NOTAS</Text>
+            <TextInput
+              accessibilityLabel="Notas de la tarea"
+              placeholder="Información adicional"
+              placeholderTextColor="#95A0B3"
+              value={editNotes}
+              onChangeText={setEditNotes}
+              maxLength={5000}
+              editable={!savingEdit}
+              multiline
+              textAlignVertical="top"
+              style={[styles.searchInput, { minHeight: 90 }]}
+            />
+
+            <Text style={styles.label}>VENCIMIENTO — AAAA-MM-DD</Text>
+            <TextInput
+              accessibilityLabel="Fecha de vencimiento, año mes día"
+              placeholder="Ej.: 2026-11-25"
+              placeholderTextColor="#95A0B3"
+              value={editDueDate}
+              onChangeText={setEditDueDate}
+              maxLength={10}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!savingEdit}
+              style={styles.searchInput}
             />
 
             <Text style={styles.label}>PRIORIDAD</Text>
@@ -550,6 +609,47 @@ export default function TaskManagerScreen() {
                 </Text>
               </Pressable>
             </View>
+            <Text style={[styles.label, { marginTop: 12 }]}>
+              CATEGORÍA
+            </Text>
+            <TextInput
+              accessibilityLabel="Categoría de la nueva tarea"
+              placeholder="Ej.: Estudio o trabajo"
+              placeholderTextColor="#95A0B3"
+              value={newCategories}
+              onChangeText={setNewCategories}
+              maxLength={255}
+              editable={!saving}
+              style={styles.searchInput}
+            />
+
+            <Text style={styles.label}>NOTAS</Text>
+            <TextInput
+              accessibilityLabel="Notas de la nueva tarea"
+              placeholder="Información adicional"
+              placeholderTextColor="#95A0B3"
+              value={newNotes}
+              onChangeText={setNewNotes}
+              maxLength={5000}
+              editable={!saving}
+              multiline
+              textAlignVertical="top"
+              style={[styles.searchInput, { minHeight: 80 }]}
+            />
+
+            <Text style={styles.label}>VENCIMIENTO — AAAA-MM-DD</Text>
+            <TextInput
+              accessibilityLabel="Vencimiento de la nueva tarea, año mes día"
+              placeholder="Ej.: 2026-11-25"
+              placeholderTextColor="#95A0B3"
+              value={newDueDate}
+              onChangeText={setNewDueDate}
+              maxLength={10}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!saving}
+              style={styles.searchInput}
+            />
             {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
 
             <Text style={[styles.label, styles.sectionHeading]}>MIS TAREAS</Text>

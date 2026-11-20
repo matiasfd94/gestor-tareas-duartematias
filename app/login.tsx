@@ -62,7 +62,6 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.form}>
-            <Text style={styles.brand}>MACEDO</Text>
             <Text style={styles.title}>Bienvenido</Text>
             <Text style={styles.subtitle}>
               Accedé a tu cuenta para gestionar tus tareas.

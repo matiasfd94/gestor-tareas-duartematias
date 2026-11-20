@@ -201,8 +201,8 @@ Los resultados y capturas están en docs/testeo.
 El detalle de los seis errores originales se encuentra
 en INFORME_INCIDENTES.md.
 
-## Pendiente de cierre
+## Verificación final
 
-- Instalar la Preview actualizada.
-- Verificar login, perfil, sesión y ABM completo en esa APK.
-- Capturar y registrar los resultados finales.
+La Preview actualizada se instaló y se comprobó el recorrido
+completo de login, perfil, sesión y ABM con los campos nuevos,
+sin depender de los servidores locales.

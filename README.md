@@ -45,8 +45,7 @@ El login y el ABM están conectados con Laravel en Railway.
 Se generaron e instalaron una primera APK Preview y una APK
 Development. El trabajo diario continúa con Development.
 
-La Preview actualizada con Perfil, diseño oscuro, campos nuevos
-e ícono está en compilación. Su verificación final está pendiente.
+La Preview actualizada se instaló y se verificó su recorrido completo en el celular, con Metro y Laravel local apagados.
 
 ## Instalación del frontend
 

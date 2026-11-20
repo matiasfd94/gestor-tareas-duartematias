@@ -1,6 +1,7 @@
 {
   "expo": {
-    "name": "Gestor de tareas · Duarte",
+    "name": "Gestor de tareas · Matias",
+    "icon": "./assets/gestor-icon.png",
     "slug": "gestor-tareas-duartematias",
     "scheme": "gestortareasduarte",
     "version": "1.0.0",

@@ -1,0 +1,902 @@
+import { useEffect, useMemo, useState } from 'react';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  ActivityIndicator, Alert, FlatList, Keyboard, Pressable, ScrollView,
+  StyleSheet, Text, TextInput, View, Modal,
+} from 'react-native';
+import { TaskCard } from '../src/components/TaskCard';
+import { StatusTabs } from '../src/components/StatusTabs';
+import {fetchTasks, createTask, updateTaskCompleted, deleteTaskById, updateTask, SessionExpiredError,} from '../src/services/taskService';
+import type {Task, TaskStatus, TaskPriority,} from '../src/types/task';
+import { filterTasks } from '../src/utils/taskFilters';
+import { isValidTaskTitle } from '../src/utils/taskValidation';
+import {logout, getCurrentUser, type AuthUser,} from '../src/services/authService';
+
+export default function TaskManagerScreen() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<TaskStatus>('todas');
+  const [newTitle, setNewTitle] = useState('');
+  const [newCategories, setNewCategories] = useState('');
+  const [newNotes, setNewNotes] = useState('');
+  const [newDueDate, setNewDueDate] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPriority, setEditPriority] = useState<TaskPriority>('media');
+  const [editCategories, setEditCategories] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editDueDate, setEditDueDate] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [sessionVerified, setSessionVerified] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  
+  function handleSessionError(caught: unknown): boolean {
+    if (!(caught instanceof SessionExpiredError)) return false;
+
+    setTasks([]);
+    setEditingTask(null);
+    setSessionVerified(false);
+    setError(null);
+    setFeedback('');
+
+    router.replace('/login');
+
+    Alert.alert(
+      'Sesión finalizada',
+      'Tu sesión venció o dejó de ser válida. Volvé a iniciar sesión.'
+    );
+
+    return true;
+  }
+
+
+  async function loadTasks(simulateFailure = false) {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const records = await fetchTasks(simulateFailure);
+      setTasks(records);
+    } catch (caught) {
+      if (handleSessionError(caught)) return;
+      console.error('[taskService] No se cargaron las tareas', caught);
+      setError('No pudimos cargar las tareas. Probá otra vez.');
+    } finally {
+      setLoading(false);
+    }
+  } 
+
+  async function verifySession() {
+    setCheckingSession(true);
+    setSessionError(null);
+
+    try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
+
+      setCurrentUser(user);
+      setSessionVerified(true);
+      await loadTasks();
+    } catch (caught) {
+      setSessionError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos verificar la sesión.'
+      );
+    } finally {
+      setCheckingSession(false);
+    }
+  }
+
+  useEffect(() => {
+    void verifySession();
+  }, []);
+
+  const visibleTasks = useMemo(() => filterTasks(tasks, query, status),[tasks, query, status]);
+  const total = tasks.length;
+  const completed = tasks.filter((task) => task.completed).length;
+
+  async function toggleTask(id: string) {
+    if (updating || loading) return;
+
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
+
+    setUpdating(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      const updatedTask = await updateTaskCompleted(
+        id,
+        !task.completed
+      );
+
+      setTasks((previous) =>
+        previous.map((item) =>
+          item.id === id ? updatedTask : item
+        )
+      );
+
+      setFeedback(
+        updatedTask.completed
+          ? 'Tarea marcada como completada.'
+          : 'Tarea marcada como pendiente.'
+      );
+    } catch (caught) {
+      if (handleSessionError(caught)) return;
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos actualizar la tarea.'
+      );
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  async function addTask() {
+    if (saving || loading) return;
+
+    if (!isValidTaskTitle(newTitle)) {
+      setFeedback('Ingresá un nombre válido para continuar.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      const task = await createTask(newTitle, {
+        categories: newCategories,
+        notes: newNotes,
+        due_date: newDueDate,
+      });
+
+      setTasks((previous) => [task, ...previous]);
+      setNewTitle('');
+      setNewCategories('');
+      setNewNotes('');
+      setNewDueDate('');
+      setFeedback('Tarea guardada correctamente.');
+      Keyboard.dismiss();
+    } catch (caught) {
+      if (handleSessionError(caught)) return;
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos guardar la tarea. Probá otra vez.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function deleteTask(id: string) {
+    if (deleting || loading || updating || saving) return;
+
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
+
+    Alert.alert(
+      'Eliminar tarea',
+      `¿Querés eliminar "${task.title}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => void confirmDeleteTask(id),
+        },
+      ]
+    );
+  }
+
+  async function confirmDeleteTask(id: string) {
+    if (deleting || loading || updating || saving) return;
+
+    setDeleting(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      await deleteTaskById(id);
+
+      setTasks((previous) =>
+        previous.filter((task) => task.id !== id)
+      );
+
+      setFeedback('Tarea eliminada correctamente.');
+    } catch (caught) {
+      if (handleSessionError(caught)) return;
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos eliminar la tarea.'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function startEditing(task: Task) {
+    if (loading || saving || updating || deleting || savingEdit) return;
+
+    setEditingTask(task);
+    setEditTitle(task.title);
+    setEditDescription(task.description);
+    setEditPriority(task.priority);
+    setEditCategories(task.categories ?? '');
+    setEditNotes(task.notes ?? '');
+    setEditDueDate(task.due_date ?? '');
+    setEditError(null);
+  }
+
+  async function saveEditing() {
+    if (!editingTask || savingEdit) return;
+
+    if (!isValidTaskTitle(editTitle)) {
+      setEditError('Ingresá un título válido.');
+      return;
+    }
+
+    setSavingEdit(true);
+    setEditError(null);
+
+    try {
+      const updatedTask = await updateTask(editingTask.id, {
+        title: editTitle,
+        description: editDescription,
+        priority: editPriority,
+        categories: editCategories,
+        notes: editNotes,
+        due_date: editDueDate,
+      });
+
+      setTasks((previous) =>
+        previous.map((task) =>
+          task.id === updatedTask.id ? updatedTask : task
+        )
+      );
+
+      setEditingTask(null);
+      setFeedback('Cambios guardados correctamente.');
+      Keyboard.dismiss();
+    } catch (caught) {
+      if (handleSessionError(caught)) return;
+      setEditError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos guardar los cambios.'
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function handleLogout() {
+    if (
+      loggingOut || loading || saving ||
+      updating || deleting || savingEdit
+    ) return;
+
+    setLoggingOut(true);
+    setError(null);
+    setFeedback('');
+
+    try {
+      await logout();
+      setTasks([]);
+      router.replace('/login');
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos cerrar la sesión.'
+      );
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
+  if (!sessionVerified) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.listContainer}>
+          <Text style={styles.heading}>Gestor de tareas</Text>
+
+          {checkingSession ? (
+            <View style={styles.loading}>
+              <ActivityIndicator color="#147D73" size="large" />
+              <Text style={styles.loadingLabel}>
+                Verificando sesión...
+              </Text>
+            </View>
+          ) : sessionError ? (
+            <>
+              <Text accessibilityRole="alert" style={styles.error}>
+                {sessionError}
+              </Text>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void verifySession()}
+                style={styles.retryButton}
+              >
+                <Text style={styles.retryLabel}>Reintentar</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text style={styles.loadingLabel}>
+              Volviendo al inicio de sesión...
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      <Modal
+        visible={editingTask !== null}
+        animationType="slide"
+        onRequestClose={() => {
+          if (!savingEdit) setEditingTask(null);
+        }}
+      >
+        <SafeAreaView style={styles.screen}>
+          <ScrollView
+            contentContainerStyle={styles.listContainer}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.heading}>Editar tarea</Text>
+            <Text style={styles.subtitle}>
+              Modificá los datos y guardá los cambios.
+            </Text>
+
+            <Text style={styles.label}>TÍTULO</Text>
+            <TextInput
+              accessibilityLabel="Título de la tarea"
+              value={editTitle}
+              onChangeText={setEditTitle}
+              maxLength={150}
+              editable={!savingEdit}
+              style={styles.searchInput}
+            />
+
+            <Text style={styles.label}>DESCRIPCIÓN</Text>
+            <TextInput
+              accessibilityLabel="Descripción de la tarea"
+              value={editDescription}
+              onChangeText={setEditDescription}
+              maxLength={2000}
+              editable={!savingEdit}
+              multiline
+              textAlignVertical="top"
+              style={[styles.searchInput, { minHeight: 120 }]}
+            />
+
+            <Text style={styles.label}>CATEGORÍA</Text>
+            <TextInput
+              accessibilityLabel="Categoría de la tarea"
+              placeholder="Ej.: Estudio, trabajo o personal"
+              placeholderTextColor="#95A0B3"
+              value={editCategories}
+              onChangeText={setEditCategories}
+              maxLength={255}
+              editable={!savingEdit}
+              style={styles.searchInput}
+            />
+
+            <Text style={styles.label}>NOTAS</Text>
+            <TextInput
+              accessibilityLabel="Notas de la tarea"
+              placeholder="Información adicional"
+              placeholderTextColor="#95A0B3"
+              value={editNotes}
+              onChangeText={setEditNotes}
+              maxLength={5000}
+              editable={!savingEdit}
+              multiline
+              textAlignVertical="top"
+              style={[styles.searchInput, { minHeight: 90 }]}
+            />
+
+            <Text style={styles.label}>VENCIMIENTO — AAAA-MM-DD</Text>
+            <TextInput
+              accessibilityLabel="Fecha de vencimiento, año mes día"
+              placeholder="Ej.: 2026-11-25"
+              placeholderTextColor="#95A0B3"
+              value={editDueDate}
+              onChangeText={setEditDueDate}
+              maxLength={10}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!savingEdit}
+              style={styles.searchInput}
+            />
+
+            <Text style={styles.label}>PRIORIDAD</Text>
+            <View style={styles.actions}>
+              {(['baja', 'media', 'alta'] as const).map((priority) => (
+                <Pressable
+                  key={priority}
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    selected: editPriority === priority,
+                    disabled: savingEdit,
+                  }}
+                  disabled={savingEdit}
+                  onPress={() => setEditPriority(priority)}
+                  style={[
+                    styles.retryButton,
+                    editPriority === priority && {
+                      backgroundColor: '#147D73',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.retryLabel,
+                      editPriority === priority && { color: '#FFFFFF' },
+                    ]}
+                  >
+                    {priority.toUpperCase()}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {editError ? (
+              <Text accessibilityRole="alert" style={styles.error}>
+                {editError}
+              </Text>
+            ) : null}
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: savingEdit, busy: savingEdit }}
+              disabled={savingEdit}
+              onPress={() => void saveEditing()}
+              style={[
+                styles.addButton,
+                { paddingVertical: 15, opacity: savingEdit ? 0.5 : 1 },
+              ]}
+            >
+              <Text style={styles.addButtonText}>
+                {savingEdit ? 'Guardando...' : 'Guardar cambios'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={savingEdit}
+              onPress={() => setEditingTask(null)}
+              style={[
+                styles.retryButton,
+                {
+                  flex: 0,
+                  marginTop: 12,
+                  paddingVertical: 15,
+                  justifyContent: 'center',
+                },
+              ]}
+            >
+              <Text style={styles.retryLabel}>Cancelar</Text>
+            </Pressable>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+      <FlatList
+        data={loading ? [] : visibleTasks}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TaskCard task={item} onToggle={() => void toggleTask(item.id)} onDelete={() => deleteTask(item.id)} onEdit={() => startEditing(item)}/>
+        )}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={
+          <>
+            <Text style={styles.heading}>Gestor de tareas</Text>
+            <Text style={styles.subtitle}>
+              Organizá tus tareas personales
+            </Text>
+
+            <View style={styles.userRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir perfil de ${currentUser?.name ?? 'usuario'}`}
+                disabled={
+                  loading || saving || updating ||
+                  deleting || savingEdit || loggingOut
+                }
+                onPress={() => router.replace('/profile')}
+                style={styles.userButton}
+              >
+                <Text style={styles.userName}>
+                  {currentUser?.name ?? 'Mi perfil'} 
+                </Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/guia')}
+                style={styles.helpButton}
+              >
+                <Text style={styles.helpText}>Guía ↗</Text>
+              </Pressable>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{
+                disabled: loggingOut || loading || saving ||
+                  updating || deleting || savingEdit,
+                busy: loggingOut,
+              }}
+              disabled={
+                loggingOut || loading || saving ||
+                updating || deleting || savingEdit
+              }
+              onPress={() => void handleLogout()}
+              style={[
+                styles.retryButton,
+                { alignSelf: 'flex-end', marginBottom: 16 },
+              ]}
+            >
+              <Text style={styles.retryLabel}>
+                {loggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+              </Text>
+            </Pressable>
+
+            <View style={styles.statsRow}>
+              <View style={[styles.stat, styles.statDark]}>
+                <Text style={styles.statLabelLight}>TAREAS</Text>
+                <Text style={styles.statNumberLight}>{total}</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>COMPLETADAS</Text>
+                <Text style={styles.statNumber}>{completed}</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>PENDIENTES</Text>
+                <Text style={styles.statNumber}>{total - completed}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.label}>NUEVA TAREA</Text>
+            <View style={styles.addRow}>
+              <TextInput
+                testID="new-task-input"
+                accessibilityLabel="Nombre de la nueva tarea"
+                placeholder="Ej.: Revisar documentación"
+                placeholderTextColor="#95A0B3"
+                value={newTitle}
+                onChangeText={setNewTitle}
+                returnKeyType="done"
+                style={styles.addInput}
+                maxLength={150}
+                editable={!saving}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: saving || loading, busy: saving }}
+                testID="add-task-button"
+                style={[styles.addButton, { opacity: saving || loading ? 0.5 : 1 }]}
+                disabled={saving || loading}
+                onPress={() => void addTask()}
+              >
+                <Text style={styles.addButtonText}>
+                  {saving ? 'Guardando...' : 'Agregar'}
+                </Text>
+              </Pressable>
+            </View>
+            <Text style={[styles.label, { marginTop: 12 }]}>
+              CATEGORÍA
+            </Text>
+            <TextInput
+              accessibilityLabel="Categoría de la nueva tarea"
+              placeholder="Ej.: Estudio o trabajo"
+              placeholderTextColor="#95A0B3"
+              value={newCategories}
+              onChangeText={setNewCategories}
+              maxLength={255}
+              editable={!saving}
+              style={styles.searchInput}
+            />
+
+            <Text style={styles.label}>NOTAS</Text>
+            <TextInput
+              accessibilityLabel="Notas de la nueva tarea"
+              placeholder="Información adicional"
+              placeholderTextColor="#95A0B3"
+              value={newNotes}
+              onChangeText={setNewNotes}
+              maxLength={5000}
+              editable={!saving}
+              multiline
+              textAlignVertical="top"
+              style={[styles.searchInput, { minHeight: 80 }]}
+            />
+
+            <Text style={styles.label}>VENCIMIENTO — AAAA-MM-DD</Text>
+            <TextInput
+              accessibilityLabel="Vencimiento de la nueva tarea, año mes día"
+              placeholder="Ej.: 2026-11-25"
+              placeholderTextColor="#95A0B3"
+              value={newDueDate}
+              onChangeText={setNewDueDate}
+              maxLength={10}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!saving}
+              style={styles.searchInput}
+            />
+            {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
+
+            <Text style={[styles.label, styles.sectionHeading]}>MIS TAREAS</Text>
+            <TextInput
+              testID="search-input"
+              accessibilityLabel="Buscar tareas"
+              placeholder="Buscar por nombre..."
+              placeholderTextColor="#95A0B3"
+              value={query}
+              onChangeText={setQuery}
+              style={styles.searchInput}
+            />
+            <StatusTabs current={status} onChange={setStatus} />
+
+            <View style={styles.actions}>
+              <Pressable accessibilityRole="button" style={styles.retryButton} onPress={() => void loadTasks()}>
+                <Text style={styles.retryLabel}>↻ Recargar datos</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" testID="simulate-error-button" style={styles.simulateButton} onPress={() => void loadTasks(true)}>
+                <Text style={styles.simulateLabel}>⚠ Simular error API</Text>
+              </Pressable>
+            </View>
+            {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+            {loading ? (
+              <View style={styles.loading}>
+                <ActivityIndicator color="#147D73" size="large" />
+                <Text style={styles.loadingLabel}>Consultando tareas…</Text>
+              </View>
+            ) : null}
+          </>
+        }
+        ListEmptyComponent={!loading ? <Text style={styles.empty}>No hay tareas para mostrar con estos filtros.</Text> : null}
+        ListFooterComponent={<Text style={styles.footer}>EDI · Desarrollo de Software Multiplataforma · Auditoría técnica</Text>}
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#0b1326',
+  },
+  listContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 55,
+    flexGrow: 1,
+  },
+  heading: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#dae2fd',
+    marginTop: 4,
+  },
+  subtitle: {
+    color: '#bbcabf',
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 12,
+    lineHeight: 21,
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 12,
+  },
+  userButton: {
+    flex: 1,
+    paddingVertical: 10,
+  },
+  userName: {
+    color: '#4edea3',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  helpButton: {
+    backgroundColor: '#171f33',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  helpText: {
+    fontWeight: '700',
+    color: '#4edea3',
+    fontSize: 12,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+  },
+  stat: {
+    backgroundColor: '#171f33',
+    padding: 12,
+    borderRadius: 15,
+    flex: 1,
+    borderColor: '#2d3449',
+    borderWidth: 1,
+  },
+  statDark: {
+    backgroundColor: '#143a30',
+    borderColor: '#32735c',
+  },
+  statLabel: {
+    fontWeight: '700',
+    color: '#bbcabf',
+    fontSize: 9,
+    letterSpacing: 0.35,
+  },
+  statLabelLight: {
+    fontWeight: '700',
+    color: '#b5f1d5',
+    fontSize: 9,
+    letterSpacing: 0.35,
+  },
+  statNumber: {
+    marginTop: 8,
+    color: '#dae2fd',
+    fontWeight: '800',
+    fontSize: 25,
+  },
+  statNumberLight: {
+    marginTop: 8,
+    color: '#4edea3',
+    fontWeight: '800',
+    fontSize: 25,
+  },
+  label: {
+    fontSize: 11,
+    color: '#bbcabf',
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    marginBottom: 10,
+  },
+  sectionHeading: {
+    marginTop: 20,
+  },
+  addRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 7,
+  },
+  addInput: {
+    flex: 1,
+    backgroundColor: '#171f33',
+    borderWidth: 1,
+    borderColor: '#2d3449',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+    color: '#dae2fd',
+    fontSize: 14,
+    minWidth: 0,
+  },
+  addButton: {
+    backgroundColor: '#4edea3',
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#003824',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  feedback: {
+    color: '#4edea3',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  searchInput: {
+    backgroundColor: '#171f33',
+    borderWidth: 1,
+    borderColor: '#2d3449',
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 13,
+    color: '#dae2fd',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 7,
+    marginBottom: 13,
+  },
+  retryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#172e2a',
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+  },
+  retryLabel: {
+    fontSize: 12,
+    color: '#4edea3',
+    fontWeight: '700',
+  },
+  simulateButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    backgroundColor: '#3b202b',
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+  },
+  simulateLabel: {
+    fontSize: 12,
+    color: '#ffb4ab',
+    fontWeight: '700',
+  },
+  error: {
+    color: '#ffdad6',
+    backgroundColor: '#5c1821',
+    padding: 12,
+    borderRadius: 10,
+    fontWeight: '600',
+    marginBottom: 10,
+    fontSize: 12,
+  },
+  loading: {
+    alignItems: 'center',
+    paddingTop: 24,
+    paddingBottom: 18,
+    gap: 10,
+  },
+  loadingLabel: {
+    color: '#bbcabf',
+    fontSize: 12,
+  },
+  empty: {
+    marginTop: 30,
+    textAlign: 'center',
+    color: '#bbcabf',
+    lineHeight: 20,
+    fontSize: 13,
+  },
+  footer: {
+    textAlign: 'center',
+    color: '#a4afc1',
+    fontSize: 10,
+    paddingTop: 30,
+  },
+});

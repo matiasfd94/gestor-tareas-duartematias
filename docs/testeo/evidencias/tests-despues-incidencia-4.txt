@@ -1,0 +1,13 @@
+
+> gestor-tareas-debugging@1.0.0 test
+> jest --runInBand
+
+PASS __tests__/taskValidation.test.ts
+PASS __tests__/TaskCard.test.tsx
+PASS __tests__/taskFilters.test.ts
+
+Test Suites: 3 passed, 3 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        3.576 s, estimated 5 s
+Ran all test suites.

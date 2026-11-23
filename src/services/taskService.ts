@@ -1,265 +1,165 @@
-import type { Task, TaskPriority } from '../types/task';
+import type { CreateTaskInput, Task, TaskFilters } from '../types/task';
 import { getApiUrl } from './config';
-import { getToken, clearToken } from './sessionStorage';
+import {
+  isValidTaskTitle, MAX_DESCRIPTION_BYTES, utf8ByteLength,
+} from '../utils/taskValidation';
 
-export class SessionExpiredError extends Error {
-  constructor() {
-    super('La sesión ya no es válida. Volvé a iniciar sesión.');
-    this.name = 'SessionExpiredError';
+export class ApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
   }
 }
 
-type ApiTask = {
-  id: number;
-  title: string;
-  description: string | null;
-  priority: TaskPriority;
-  completed: boolean;
-  categories?: string | null;
-  notes?: string | null;
-  due_date?: string | null;
-  slug?: string;
-  completed_at?: string | null;
-};
+export function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
+}
 
-function mapTask(task: ApiTask): Task {
+function cancelled(): Error {
+  const error = new Error('Consulta cancelada.');
+  error.name = 'AbortError';
+  return error;
+}
+
+function parseTask(value: unknown): Task {
+  if (!value || typeof value !== 'object') {
+    throw new ApiError(502, 'El servidor devolvió una tarea inválida.');
+  }
+  const task = value as Record<string, unknown>;
+  if (
+    typeof task.id !== 'number' || !Number.isSafeInteger(task.id) || task.id <= 0 ||
+    typeof task.title !== 'string' || typeof task.description !== 'string' ||
+    typeof task.completed !== 'boolean' || typeof task.createdAt !== 'string' ||
+    Number.isNaN(Date.parse(task.createdAt))
+  ) {
+    throw new ApiError(502, 'Los datos recibidos no coinciden con la API de tareas.');
+  }
   return {
-    id: String(task.id),
-    title: task.title,
-    description: task.description ?? '',
-    priority: task.priority,
-    completed: task.completed,
-    categories: task.categories ?? null,
-    notes: task.notes ?? null,
-    due_date: task.due_date ?? null,
-    slug: task.slug,
-    completed_at: task.completed_at ?? null,
+    id: task.id, title: task.title, description: task.description,
+    completed: task.completed, createdAt: task.createdAt,
   };
 }
 
-export async function fetchTasks(
-  simulateFailure = false
-): Promise<Task[]> {
-  if (simulateFailure) {
-    throw new Error(
-      'HTTP 503: servidor temporalmente indisponible (simulado)'
+function validId(id: number): void {
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw new ApiError(400, 'El identificador de la tarea no es válido.');
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: { method?: string; body?: object; signal?: AbortSignal } = {},
+): Promise<T> {
+  const controller = new AbortController();
+  let timedOut = false;
+  const onAbort = () => controller.abort();
+  if (options.signal?.aborted) throw cancelled();
+  options.signal?.addEventListener('abort', onAbort);
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, 20000);
+
+  try {
+    const response = await fetch(getApiUrl() + path, {
+      method: options.method ?? 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      },
+      ...(options.body ? { body: JSON.stringify(options.body) } : {}),
+      signal: controller.signal,
+    });
+    if (options.signal?.aborted) throw cancelled();
+
+    const text = await response.text();
+    let data: unknown;
+    if (text.trim()) {
+      try { data = JSON.parse(text); } catch { /* El error HTTP puede devolver HTML. */ }
+    }
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new ApiError(
+          response.status,
+          'El servidor está restringiendo el acceso a la API pública. Avisá al profesor.',
+        );
+      }
+      const payload = data && typeof data === 'object'
+        ? data as Record<string, unknown> : {};
+      const message = typeof payload.message === 'string' ? payload.message
+        : typeof payload.error === 'string' ? payload.error
+        : response.status === 404 ? 'La tarea ya no existe. Se actualizará el listado.'
+        : response.status === 400 ? 'Revisá los datos y los filtros enviados.'
+        : 'El servidor no pudo completar la solicitud. Probá otra vez.';
+      throw new ApiError(response.status, message.slice(0, 400));
+    }
+
+    if (response.status === 204) return undefined as T;
+    if (data === undefined) {
+      throw new ApiError(502, 'El servidor no devolvió una respuesta JSON válida.');
+    }
+    return data as T;
+  } catch (error) {
+    if (options.signal?.aborted || isAbortError(error) && !timedOut) throw cancelled();
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      0,
+      timedOut ? 'El servidor tardó demasiado. Podés reintentar.'
+        : 'No pudimos conectar con la API. Revisá internet y volvé a consultar.',
     );
-  }
-
-  const token = await getToken();
-
-  if (!token) {
-    throw new SessionExpiredError();
-  }
-
-  const response = await fetch(`${getApiUrl()}/tasks`, {
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (response.status === 401) {
-    await clearToken();
-    throw new SessionExpiredError();
-  }
-
-  if (!response.ok) {
-    throw new Error('No pudimos consultar las tareas del servidor.');
-  }
-
-  const body: { data: ApiTask[] } = await response.json();
-
-  if (!Array.isArray(body.data)) {
-    throw new Error('El servidor devolvió un listado inválido.');
-  }
-
-  return body.data.map(mapTask);
-}
-
-export async function createTask(
-  title: string,
-  details: {
-    categories?: string;
-    notes?: string;
-    due_date?: string;
-  } = {}
-): Promise<Task> {
-  const token = await getToken();
-
-  if (!token) {
-    throw new SessionExpiredError();
-  }
-
-  const response = await fetch(`${getApiUrl()}/tasks`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      title: title.trim(),
-      description: null,
-      priority: 'media',
-      categories: details.categories?.trim() || null,
-      notes: details.notes?.trim() || null,
-      due_date: details.due_date?.trim() || null,
-    }),
-  });
-
-  if (response.status === 401) {
-    await clearToken();
-    throw new SessionExpiredError();
-  }
-
-  if (response.status === 422) {
-    throw new Error(
-      'Revisá los campos: el título admite hasta 150 caracteres y el vencimiento debe ser una fecha válida con formato AAAA-MM-DD.'
-    );
-  }
-
-  if (!response.ok) {
-    throw new Error('No pudimos guardar la tarea. Probá otra vez.');
-  }
-
-  const body: { data: ApiTask } = await response.json();
-  const task = body.data;
-
-  return mapTask(task);
-}
-
-export async function updateTaskCompleted(
-  id: string,
-  completed: boolean
-): Promise<Task> {
-  const token = await getToken();
-
-  if (!token) {
-    throw new SessionExpiredError();
-  }
-
-  const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
-    method: 'PATCH',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ completed }),
-  });
-
-  if (response.status === 401) {
-    await clearToken();
-    throw new SessionExpiredError();
-  }
-
-  if (response.status === 404) {
-    throw new Error('La tarea ya no está disponible. Recargá el listado.');
-  }
-
-  if (!response.ok) {
-    throw new Error('No pudimos actualizar la tarea. Probá otra vez.');
-  }
-
-  const body: { data: ApiTask } = await response.json();
-  const task = body.data;
-
-  return mapTask(task);
-}
-
-export async function deleteTaskById(id: string): Promise<void> {
-  const token = await getToken();
-
-  if (!token) {
-    throw new SessionExpiredError();
-  }
-
-  const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (response.status === 401) {
-    await clearToken();
-    throw new SessionExpiredError();
-  }
-
-  if (response.status === 404) {
-    throw new Error('La tarea ya no está disponible. Recargá el listado.');
-  }
-
-  if (!response.ok) {
-    throw new Error('No pudimos eliminar la tarea. Probá otra vez.');
+  } finally {
+    clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', onAbort);
   }
 }
 
-export type TaskChanges = {
-  title: string;
-  description: string;
-  priority: TaskPriority;
-  categories?: string;
-  notes?: string;
-  due_date?: string;
+const statusMap = {
+  todas: 'all', pendientes: 'pending', completadas: 'completed',
+} as const;
+
+export const tasksService = {
+  async list(filters: TaskFilters = {}, signal?: AbortSignal): Promise<Task[]> {
+    const params = new URLSearchParams({
+      status: statusMap[filters.status ?? 'todas'],
+    });
+    const search = filters.search?.trim();
+    if (search) params.set('search', search);
+    const data = await request<unknown>('/tasks?' + params.toString(), { signal });
+    if (!Array.isArray(data)) {
+      throw new ApiError(502, 'El listado debe ser un array de tareas, sin envoltura data.');
+    }
+    return data.map(parseTask);
+  },
+
+  async get(id: number, signal?: AbortSignal): Promise<Task> {
+    validId(id);
+    return parseTask(await request<unknown>('/tasks/' + id, { signal }));
+  },
+
+  async create(input: CreateTaskInput): Promise<Task> {
+    if (!isValidTaskTitle(input.title)) {
+      throw new ApiError(400, 'El título debe tener texto y admitir hasta 200 bytes UTF-8.');
+    }
+    const description = input.description?.trim() ?? '';
+    if (utf8ByteLength(description) > MAX_DESCRIPTION_BYTES) {
+      throw new ApiError(400, 'La descripción admite hasta 10000 bytes UTF-8.');
+    }
+    return parseTask(await request<unknown>('/tasks', {
+      method: 'POST',
+      body: { title: input.title.trim(), description },
+    }));
+  },
+
+  async setCompleted(id: number, completed: boolean): Promise<Task> {
+    validId(id);
+    return parseTask(await request<unknown>('/tasks/' + id, {
+      method: 'PATCH', body: { completed },
+    }));
+  },
+
+  async remove(id: number): Promise<void> {
+    validId(id);
+    await request<void>('/tasks/' + id, { method: 'DELETE' });
+  },
 };
-
-export async function updateTask(
-  id: string,
-  changes: TaskChanges
-): Promise<Task> {
-  const token = await getToken();
-
-  if (!token) {
-    throw new SessionExpiredError();
-  }
-
-  const response = await fetch(`${getApiUrl()}/tasks/${id}`, {
-    method: 'PATCH',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      title: changes.title.trim(),
-      description: changes.description.trim(),
-      priority: changes.priority,
-      categories: changes.categories === undefined
-        ? undefined
-        : changes.categories.trim() || null,
-      notes: changes.notes === undefined
-        ? undefined
-        : changes.notes.trim() || null,
-      due_date: changes.due_date === undefined
-        ? undefined
-        : changes.due_date.trim() || null,
-    }),
-  });
-
-  if (response.status === 401) {
-    await clearToken();
-    throw new SessionExpiredError();
-  }
-
-  if (response.status === 404) {
-    throw new Error('La tarea ya no está disponible. Recargá el listado.');
-  }
-
-  if (response.status === 422) {
-    throw new Error(
-      'Revisá los campos. El vencimiento debe tener formato AAAA-MM-DD y ser una fecha válida.'
-    );
-  }
-
-  if (!response.ok) {
-    throw new Error('No pudimos guardar los cambios. Probá otra vez.');
-  }
-
-  const body: { data: ApiTask } = await response.json();
-  const task = body.data;
-
-  return mapTask(task);
-}

@@ -6,24 +6,21 @@ type TaskCardProps = {
   task: Task;
   onToggle: () => void;
   onDelete: () => void;
-  onEdit?: () => void;
+  busy?: boolean;
 };
 
-export function TaskCard({
-    task,
-    onToggle,
-    onDelete,
-    onEdit,
-  }: TaskCardProps) {
+export function TaskCard({ task, onToggle, onDelete, busy = false }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, busy && { opacity: 0.6 }]}>
       <View style={styles.topLine}>
         <Pressable
-          testID={`toggle-${task.id}`}
-          accessibilityRole="button"
-          accessibilityLabel={`Cambiar estado de ${task.title}`}
+          testID={'toggle-' + task.id}
+          accessibilityRole="checkbox"
+          accessibilityLabel={'Cambiar estado de ' + task.title}
+          accessibilityState={{ checked: task.completed, disabled: busy, busy }}
+          disabled={busy}
           style={[styles.check, task.completed && styles.checked]}
           onPress={onToggle}
         >
@@ -31,18 +28,15 @@ export function TaskCard({
         </Pressable>
         <View style={styles.content}>
           <Text style={[styles.title, task.completed && styles.completed]}>{task.title}</Text>
-          <View style={styles.row}>
-            <Text style={[styles.priority, task.priority === 'alta' && styles.high]}>
-              {task.priority.toUpperCase()}
-            </Text>
-            <Text style={styles.dividerText}>·</Text>
-            <Text style={styles.state}>{task.completed ? 'Completada' : 'Pendiente'}</Text>
-          </View>
+          <Text style={styles.state}>
+            {busy ? 'Guardando...' : task.completed ? 'Completada' : 'Pendiente'}
+          </Text>
         </View>
         <Pressable
-          testID={`expand-${task.id}`}
+          testID={'expand-' + task.id}
           accessibilityRole="button"
-          accessibilityLabel={`Ver detalle de ${task.title}`}
+          accessibilityLabel={'Ver detalle de ' + task.title}
+          accessibilityState={{ expanded }}
           onPress={() => setExpanded((current) => !current)}
           style={styles.expandButton}
         >
@@ -50,39 +44,19 @@ export function TaskCard({
         </Pressable>
       </View>
       {expanded ? (
-        <View style={styles.details} testID={`details-${task.id}`}>
-          <Text style={styles.description}>{task.description}</Text>
-          {task.categories ? (
-            <Text style={[styles.description, { marginTop: 10 }]}>
-              <Text style={{ fontWeight: '700' }}>Categoría: </Text>
-              {task.categories}
-            </Text>
-          ) : null}
-
-          {task.notes ? (
-            <Text style={[styles.description, { marginTop: 10 }]}>
-              <Text style={{ fontWeight: '700' }}>Notas: </Text>
-              {task.notes}
-            </Text>
-          ) : null}
-
-          {task.due_date ? (
-            <Text style={[styles.description, { marginTop: 10 }]}>
-              <Text style={{ fontWeight: '700' }}>Vencimiento: </Text>
-              {task.due_date.split('-').reverse().join('/')}
-            </Text>
-          ) : null}
-          {onEdit ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Editar ${task.title}`}
-              onPress={onEdit}
-              style={styles.editButton}
-            >
-              <Text style={styles.editText}>Editar tarea</Text>
-            </Pressable>
-          ) : null}
-          <Pressable accessibilityRole="button" onPress={onDelete} style={styles.deleteButton}>
+        <View style={styles.details} testID={'details-' + task.id}>
+          <Text style={styles.description}>{task.description || 'Sin descripción.'}</Text>
+          <Text style={styles.date}>
+            {'Creada: ' + new Date(task.createdAt).toLocaleString()}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={'Eliminar ' + task.title}
+            accessibilityState={{ disabled: busy, busy }}
+            disabled={busy}
+            onPress={onDelete}
+            style={styles.deleteButton}
+          >
             <Text style={styles.deleteText}>Eliminar tarea</Text>
           </Pressable>
         </View>
@@ -92,87 +66,24 @@ export function TaskCard({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#171f33',
-    borderRadius: 17,
-    padding: 16,
-    marginBottom: 11,
-    borderWidth: 1,
-    borderColor: '#2d3449',
-  },
+  card: { backgroundColor: '#171f33', borderRadius: 17, padding: 16,
+    marginBottom: 11, borderWidth: 1, borderColor: '#2d3449' },
   topLine: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  check: {
-    height: 25,
-    width: 25,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#86948a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checked: {
-    backgroundColor: '#4edea3',
-    borderColor: '#4edea3',
-  },
-  checkText: { color: '#003824', fontWeight: '900', fontSize: 16 },
+  check: { minHeight: 44, minWidth: 44, borderRadius: 12, borderWidth: 2,
+    borderColor: '#86948a', justifyContent: 'center', alignItems: 'center' },
+  checked: { backgroundColor: '#4edea3', borderColor: '#4edea3' },
+  checkText: { color: '#003824', fontWeight: '900', fontSize: 19 },
   content: { flex: 1 },
-  title: {
-    color: '#dae2fd',
-    fontSize: 15,
-    fontWeight: '800',
-    lineHeight: 21,
-  },
-  completed: {
-    color: '#a0ada7',
-    textDecorationLine: 'line-through',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    marginTop: 6,
-  },
-  priority: {
-    fontSize: 10,
-    letterSpacing: 0.5,
-    color: '#bbcabf',
-    fontWeight: '800',
-  },
-  high: { color: '#ffb4ab' },
-  dividerText: { color: '#86948a', fontSize: 11 },
-  state: { color: '#bbcabf', fontSize: 11 },
-  expandButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    backgroundColor: '#222a3d',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  expandText: { color: '#4edea3', fontWeight: '800', fontSize: 19 },
-  details: {
-    marginTop: 13,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#2d3449',
-  },
-  description: { fontSize: 13, color: '#bbcabf', lineHeight: 20 },
-  deleteButton: {
-    alignSelf: 'flex-start',
-    marginTop: 13,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#3b202b',
-    borderRadius: 9,
-  },
+  title: { color: '#dae2fd', fontSize: 15, fontWeight: '800', lineHeight: 21 },
+  completed: { color: '#a0ada7', textDecorationLine: 'line-through' },
+  state: { color: '#bbcabf', fontSize: 12, marginTop: 6 },
+  expandButton: { width: 44, height: 44, borderRadius: 10, backgroundColor: '#222a3d',
+    justifyContent: 'center', alignItems: 'center' },
+  expandText: { color: '#4edea3', fontWeight: '800', fontSize: 21 },
+  details: { marginTop: 13, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#2d3449' },
+  description: { fontSize: 14, color: '#bbcabf', lineHeight: 21 },
+  date: { fontSize: 12, color: '#a4afc1', marginTop: 12 },
+  deleteButton: { alignSelf: 'flex-start', marginTop: 13, paddingVertical: 12,
+    paddingHorizontal: 14, backgroundColor: '#3b202b', borderRadius: 9 },
   deleteText: { color: '#ffb4ab', fontSize: 12, fontWeight: '800' },
-  editButton: {
-    alignSelf: 'flex-start',
-    marginTop: 13,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#172e2a',
-    borderRadius: 9,
-  },
-  editText: { color: '#4edea3', fontSize: 12, fontWeight: '800' },
 });

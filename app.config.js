@@ -1,19 +1,18 @@
 module.exports = ({ config }) => {
-  const isDevelopment = process.env.APP_VARIANT === 'development';
+  const variant = process.env.APP_VARIANT || 'profesor';
+  const isDevelopment = variant === 'development' || variant === 'profesor-development';
 
   return {
     ...config,
-    name: isDevelopment
-      ? 'Matias Gestión DEV'
-      : config.name,
-    scheme: isDevelopment
-      ? 'gestortareasduartedev'
-      : config.scheme,
+    name: isDevelopment ? 'Matías Tareas Profe DEV' : 'Matías Tareas Profe',
+    scheme: isDevelopment ? 'gestortareasprofedev' : 'gestortareasprofe',
+    userInterfaceStyle: 'dark',
     android: {
       ...config.android,
       package: isDevelopment
-        ? 'com.matiasfd94.gestortareas.dev'
-        : config.android.package,
+        ? 'com.matiasfd94.gestortareas.profesor.dev'
+        : 'com.matiasfd94.gestortareas.profesor',
     },
+    extra: { ...config.extra, integration: 'api-profesor-publica' },
   };
 };

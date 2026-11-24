@@ -22,7 +22,9 @@ Todos ven el mismo listado: usar y eliminar únicamente tareas propias de prueba
 ## Estado de verificación
 
 - Código adaptado y comprobado con TypeScript, Jest y exportación del bundle Android.
-- La prueba completa desde el celular y la nueva APK están pendientes.
+- Preview instalada en el celular: creación, cambio de estado, persistencia al
+  recargar, búsqueda, filtros y eliminación comprobados manualmente.
+- Solicitudes revisadas en Telescope: POST 201, PATCH 200, GET 200 y DELETE 204.
 - El 23/11/2026 se detectó inicialmente un 401 de nginx. El profesor corrigió
   el acceso y se verificaron 11 comprobaciones con el servicio real de la app:
   listado, alta, detalle, búsqueda, filtros, cambio de estado y eliminación.
@@ -86,7 +88,14 @@ Development:
 - Android: com.matiasfd94.gestortareas.profesor.dev.
 
 Estos identificadores no sustituyen las APK originales de Railway.
-No se generó todavía una APK de esta rama.
+La Preview final se generó y actualizó en el celular el 24/11/2026.
+Incluye los ajustes de textos del commit 224eff7; se verificaron los textos y la carga.
+
+[Descargar Preview final de Matías Tareas](https://expo.dev/accounts/matiasfd94/projects/gestor-tareas-duartematias/builds/5333787c-0e01-4f0a-b365-6294c0efceae).
+
+Para usar esta Preview instalada solo se necesita internet; no hace falta Metro,
+Expo Go, Laravel local ni XAMPP.
+La variante Development dedicada de esta rama no fue compilada.
 
 ## Verificaciones
 

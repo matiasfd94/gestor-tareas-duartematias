@@ -1,6 +1,7 @@
 # Integración de la API pública del profesor
 
 Fecha: 23/11/2026.
+Actualización de cierre: 24/11/2026.
 Rama: integracion-api-profesor.
 Origen: versión propia en develop, conservada sin reemplazar su backend ni APK.
 
@@ -72,21 +73,36 @@ de la interfaz en el celular.
 - Resultado de la suite en evidencias/api-profesor-tests.json.
 - La exportación Android comprueba el bundle; no equivale a una APK instalada.
 
-## Prueba manual pendiente (usar solo una tarea propia de prueba)
+## Pruebas manuales desde la Preview y Telescope (24/11/2026)
 
-1. Abrir el gestor y consultar.
-2. Crear "Matías Duarte - prueba integración" con descripción.
-3. Buscar por título y descripción, alternar filtros.
-4. Completar y volver a pendiente.
-5. Expandir y comprobar fecha/detalle.
-6. Cancelar la confirmación de borrado y luego eliminar solo esa tarea.
-7. Repetir en la Preview dedicada, con Metro apagado.
-8. Registrar capturas y el enlace de la nueva compilación.
+Matías instaló la primera Preview dedicada, abrió el gestor sin login y realizó
+el recorrido con la tarea "Matías Duarte - prueba APK" y la descripción
+"Comprobar integración con la API del profesor.".
 
-Estado: servicio verificado contra la API pública; recorrido manual en celular
-y nueva APK pendientes.
+| Prueba | Resultado confirmado |
+|---|---|
+| Crear una tarea | Apareció en el listado. Solicitud POST /api/v1/tasks, 201. |
+| Completar | Cambió a completada. PATCH /api/v1/tasks/{id}, 200, completed: true. |
+| Recargar | La tarea conservó el estado completado. |
+| Buscar y filtrar | Con su búsqueda apareció en Completadas y no apareció en Pendientes. |
+| Consultar | GET /api/v1/tasks, 200. Se compartió el registro 52 de Telescope. |
+| Cancelar borrado | Se confirmó que la tarea permaneció al cancelar. |
+| Confirmar borrado | DELETE /api/v1/tasks/{id}, 204. No reapareció al recargar. |
 
-## Preview del 24/11/2026
+El resumen del registro 52 muestra método, ruta, estado y duración, pero no
+los parámetros de búsqueda. El comportamiento de los filtros se verificó
+en la interfaz; no se atribuye a ese resumen información que no muestra.
+La eliminación se realizó únicamente sobre la tarea propia de prueba.
+
+Evidencia manual: resultados comunicados por Matías durante el recorrido
+guiado en el celular y Telescope. No se adjuntaron capturas de este recorrido.
+El retorno a pendiente y la búsqueda por descripción se comprobaron en las
+11 pruebas del servicio real; no se registran como pruebas manuales de la APK.
+
+Estado: recorrido principal de la Preview verificado; actualización final
+instalada y revisada según el apartado siguiente.
+
+## Preview inicial del 24/11/2026
 
 - Nombre visible: Matías Tareas.
 - Perfil EAS: preview-profesor.
@@ -96,8 +112,22 @@ y nueva APK pendientes.
 - Envío realizado con EAS_NO_VCS por un fallo de Git al preparar el archivo
   desde esta sesión. Se usaron los archivos de la rama y las exclusiones
   de .gitignore; no se enviaron las credenciales de Telescope ni el .env local.
-- Estado al registrar el envío: compilación solicitada; instalación y pruebas
-  manuales en el celular y Telescope pendientes.
+- Estado final: compilación terminada, instalada y usada para el recorrido
+  manual descrito arriba. Esta compilación fue reemplazada por la actualización final.
+
+## Preview final con textos ajustados (24/11/2026)
+
+- Nombre: Matías Tareas. Mismo paquete y firma que la Preview inicial.
+- Commit de los ajustes: 224eff7, se ajustan textos de la pantalla de tareas.
+- Se retiró la aclaración sobre login y tareas compartidas y se ajustaron
+  el encabezado y el ejemplo del campo de nueva tarea.
+- [Descargar APK final](https://expo.dev/accounts/matiasfd94/projects/gestor-tareas-duartematias/builds/5333787c-0e01-4f0a-b365-6294c0efceae).
+- Compilación terminada e instalada como actualización sobre Matías Tareas.
+- Matías confirmó los textos actualizados y la carga correcta del listado.
+- TypeScript y git diff --check pasaron antes de compilar los ajustes.
+- El recorrido completo se realizó en la Preview inicial; en la actualización
+  se verificaron los cambios de texto y la carga, sin afirmar otra repetición completa.
+- La APK anterior de Railway permanece separada y sin reemplazar.
 
 ## Primera comprobación en Telescope (24/11/2026)
 
@@ -111,8 +141,8 @@ Matías confirmó que vio en el panel el registro con estos datos:
 - Estado: 200.
 - Duración: 1110 ms.
 
-Esta observación confirma el registro de esa consulta. Todavía no acredita
-las operaciones de la nueva APK, que deben probarse después de instalarla.
+Esta observación confirma el registro de esa consulta desde la computadora.
+Las operaciones posteriores desde la APK se documentan por separado arriba.
 
 ## Verificación de configuración y dependencias
 

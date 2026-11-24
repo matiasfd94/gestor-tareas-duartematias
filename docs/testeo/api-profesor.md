@@ -99,6 +99,21 @@ y nueva APK pendientes.
 - Estado al registrar el envío: compilación solicitada; instalación y pruebas
   manuales en el celular y Telescope pendientes.
 
+## Primera comprobación en Telescope (24/11/2026)
+
+Se envió desde la computadora un GET público a /api/v1/tasks, con el filtro
+search=Matias_Duarte_Telescope_20261124. No se modificaron tareas.
+Matías confirmó que vio en el panel el registro con estos datos:
+
+- ID de solicitud: 31 (no es el ID de una tarea).
+- Fecha del registro: 2026-11-24T10:14:48.97737199Z.
+- Método y ruta: GET /api/v1/tasks.
+- Estado: 200.
+- Duración: 1110 ms.
+
+Esta observación confirma el registro de esa consulta. Todavía no acredita
+las operaciones de la nueva APK, que deben probarse después de instalarla.
+
 ## Verificación de configuración y dependencias
 
 - TypeScript sin errores.

@@ -23,10 +23,11 @@ Todos ven el mismo listado: usar y eliminar únicamente tareas propias de prueba
 
 - Código adaptado y comprobado con TypeScript, Jest y exportación del bundle Android.
 - La prueba completa desde el celular y la nueva APK están pendientes.
-- El 23/11/2026, /health y /api/v1/tasks respondieron 401 de nginx,
-  con autenticación Basic del laboratorio, a solicitudes públicas.
+- El 23/11/2026 se detectó inicialmente un 401 de nginx. El profesor corrigió
+  el acceso y se verificaron 11 comprobaciones con el servicio real de la app:
+  listado, alta, detalle, búsqueda, filtros, cambio de estado y eliminación.
+- Evidencia: docs/testeo/evidencias/api-profesor-prueba-real.json.
 - No se incluyeron las claves de Telescope en el código ni se usaron para las tareas.
-  Es necesario que el servidor permita la API pública indicada por la guía.
 - Las pruebas con respuestas simuladas no demuestran disponibilidad del servidor.
 
 ## Dirección de la API y configuración

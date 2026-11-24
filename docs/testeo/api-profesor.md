@@ -35,11 +35,29 @@ Las tareas son públicas y compartidas; no se requiere login según el documento
 
 ## Comprobaciones reales de acceso
 
-Se consultaron únicamente GET /health y GET /api/v1/tasks?status=all.
-Ambas devolvieron 401 y WWW-Authenticate: Basic, realm del laboratorio.
-Es una barrera de nginx anterior al contrato JSON descrito por la guía.
-No se crearon, completaron ni eliminaron tareas del servidor durante esta revisión.
-La prueba pública de extremo a extremo queda pendiente hasta que se permita el acceso.
+En la revisión inicial, GET /health y GET /api/v1/tasks?status=all devolvieron
+401 y WWW-Authenticate: Basic. El profesor corrigió el acceso ese mismo día.
+
+Luego se ejecutó el servicio real src/services/taskService.ts desde Node,
+contra el servidor público, sin autenticación ni respuestas simuladas.
+Las 11 comprobaciones aprobadas fueron:
+
+1. Listado público.
+2. Crear una tarea identificada como prueba de Matías Duarte.
+3. Consultar esa tarea por ID.
+4. Buscar el título en mayúsculas.
+5. Buscar por la descripción.
+6. Completar la tarea.
+7. Comprobar su inclusión/exclusión con los filtros remotos de estado.
+8. Volver a pendiente.
+9. Eliminar únicamente esa tarea (204).
+10. Comprobar 404 al consultar la tarea eliminada.
+11. Verificar que ya no aparece en el listado.
+
+La tarea creada se eliminó al finalizar. No se modificaron tareas de terceros.
+Evidencia: evidencias/api-profesor-prueba-real.json.
+Esta ejecución verifica el servicio y la API, no reemplaza el recorrido manual
+de la interfaz en el celular.
 
 ## Pruebas automatizadas
 
@@ -65,7 +83,8 @@ La prueba pública de extremo a extremo queda pendiente hasta que se permita el 
 7. Repetir en la Preview dedicada, con Metro apagado.
 8. Registrar capturas y el enlace de la nueva compilación.
 
-Estado: código preparado; verificación pública real y APK pendientes.
+Estado: servicio verificado contra la API pública; recorrido manual en celular
+y nueva APK pendientes.
 
 ## Verificación de configuración y dependencias
 

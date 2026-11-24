@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-24T00:37:25.572Z",
+  "api": "https://backend-proyecto.n7softwares.com/api/v1",
+  "authentication": "publica, sin credenciales",
+  "client": "src/services/taskService.ts real, fetch de Node",
+  "scope": "Solo se modificó la tarea creada por esta prueba. No equivale a prueba manual en celular.",
+  "checks": [
+    {
+      "check": "Listado público con el servicio real",
+      "result": "PASS"
+    },
+    {
+      "check": "Crear tarea propia de prueba (POST)",
+      "result": "PASS"
+    },
+    {
+      "check": "Consultar por id (GET)",
+      "result": "PASS"
+    },
+    {
+      "check": "Buscar título sin distinguir mayúsculas",
+      "result": "PASS"
+    },
+    {
+      "check": "Buscar descripción",
+      "result": "PASS"
+    },
+    {
+      "check": "Completar tarea (PATCH)",
+      "result": "PASS"
+    },
+    {
+      "check": "Filtros remotos completadas y pendientes",
+      "result": "PASS"
+    },
+    {
+      "check": "Volver a pendiente (PATCH)",
+      "result": "PASS"
+    },
+    {
+      "check": "Eliminar únicamente la tarea creada (DELETE 204)",
+      "result": "PASS"
+    },
+    {
+      "check": "Tarea eliminada devuelve 404",
+      "result": "PASS"
+    },
+    {
+      "check": "Listado ya no contiene la tarea de prueba",
+      "result": "PASS"
+    }
+  ]
+}

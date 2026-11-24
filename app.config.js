@@ -4,7 +4,7 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
-    name: isDevelopment ? 'Matías Tareas Profe DEV' : 'Matías Tareas Profe',
+    name: isDevelopment ? 'Matías Tareas DEV' : 'Matías Tareas',
     scheme: isDevelopment ? 'gestortareasprofedev' : 'gestortareasprofe',
     userInterfaceStyle: 'dark',
     android: {

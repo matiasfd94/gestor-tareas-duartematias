@@ -78,11 +78,11 @@ Development:
     npx --yes eas-cli@latest build --platform android --profile development-profesor
 
 Preview:
-- Nombre: Matías Tareas Profe.
+- Nombre: Matías Tareas.
 - Android: com.matiasfd94.gestortareas.profesor.
 
 Development:
-- Nombre: Matías Tareas Profe DEV.
+- Nombre: Matías Tareas DEV.
 - Android: com.matiasfd94.gestortareas.profesor.dev.
 
 Estos identificadores no sustituyen las APK originales de Railway.

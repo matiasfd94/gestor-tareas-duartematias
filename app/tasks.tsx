@@ -157,8 +157,8 @@ export default function TaskManagerScreen() {
   function deleteTask(task: Task) {
     if (pendingMutations.current.has(task.id)) return;
     Alert.alert(
-      'Eliminar tarea compartida',
-      '¿Querés eliminar "' + task.title + '"? La eliminación es definitiva y afecta al listado compartido.',
+      'Eliminar tarea',
+      '¿Querés eliminar "' + task.title + '"? La eliminación es definitiva',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -191,11 +191,8 @@ export default function TaskManagerScreen() {
         contentContainerStyle={styles.container}
         ListHeaderComponent={
           <>
-            <Text style={styles.eyebrow}>API DEL PROFESOR</Text>
+            <Text style={styles.eyebrow}>MIS TAREAS</Text>
             <Text style={styles.heading}>Gestor de tareas</Text>
-            <Text style={styles.subtitle}>
-              Tareas compartidas. No se necesita iniciar sesión.
-            </Text>
 
             <View style={styles.statsRow}>
               {[
@@ -215,7 +212,7 @@ export default function TaskManagerScreen() {
             <TextInput
               testID="new-task-input"
               accessibilityLabel="Nombre de la nueva tarea"
-              placeholder="Ej.: Matías Duarte - prueba de integración"
+              placeholder="Ej.: Preparar la entrega del proyecto"
               placeholderTextColor="#95a0b3"
               value={newTitle}
               onChangeText={setNewTitle}

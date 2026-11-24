@@ -86,6 +86,19 @@ de la interfaz en el celular.
 Estado: servicio verificado contra la API pública; recorrido manual en celular
 y nueva APK pendientes.
 
+## Preview del 24/11/2026
+
+- Nombre visible: Matías Tareas.
+- Perfil EAS: preview-profesor.
+- Identificador Android: com.matiasfd94.gestortareas.profesor.
+- Código preparado en el commit 217b967 de integracion-api-profesor.
+- [Compilación en EAS](https://expo.dev/accounts/matiasfd94/projects/gestor-tareas-duartematias/builds/8e940cae-5f49-4366-9177-2ffa02c0097f).
+- Envío realizado con EAS_NO_VCS por un fallo de Git al preparar el archivo
+  desde esta sesión. Se usaron los archivos de la rama y las exclusiones
+  de .gitignore; no se enviaron las credenciales de Telescope ni el .env local.
+- Estado al registrar el envío: compilación solicitada; instalación y pruebas
+  manuales en el celular y Telescope pendientes.
+
 ## Verificación de configuración y dependencias
 
 - TypeScript sin errores.

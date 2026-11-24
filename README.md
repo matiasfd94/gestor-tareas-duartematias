@@ -2,8 +2,8 @@
 
 Rama: integracion-api-profesor.
 
-Esta rama adapta el frontend existente a la API pública de la guía de EDI.
-La versión original con login, Perfil y Railway se conserva en develop y main.
+En esta rama adapté el frontend existente a la API pública de la guía de EDI.
+Conservé la versión original con login, Perfil y Railway en develop y main.
 Los documentos históricos de esas ramas no describen necesariamente esta variante.
 
 ## Funciones de esta variante
@@ -21,15 +21,15 @@ Todos ven el mismo listado: usar y eliminar únicamente tareas propias de prueba
 
 ## Estado de verificación
 
-- Código adaptado y comprobado con TypeScript, Jest y exportación del bundle Android.
-- Preview instalada en el celular: creación, cambio de estado, persistencia al
-  recargar, búsqueda, filtros y eliminación comprobados manualmente.
-- Solicitudes revisadas en Telescope: POST 201, PATCH 200, GET 200 y DELETE 204.
-- El 23/11/2026 se detectó inicialmente un 401 de nginx. El profesor corrigió
-  el acceso y se verificaron 11 comprobaciones con el servicio real de la app:
+- Adapté y comprobé el código con TypeScript, Jest y la exportación Android.
+- Instalé la Preview en el celular y probé creación, cambio de estado,
+  persistencia al recargar, búsqueda, filtros y eliminación.
+- Revisé las solicitudes en Telescope: POST 201, PATCH 200, GET 200 y DELETE 204.
+- El 23/11/2026 detecté inicialmente un 401 de nginx. El profesor corrigió
+  el acceso y ejecuté 11 comprobaciones con el servicio real de la app:
   listado, alta, detalle, búsqueda, filtros, cambio de estado y eliminación.
 - Evidencia: docs/testeo/evidencias/api-profesor-prueba-real.json.
-- No se incluyeron las claves de Telescope en el código ni se usaron para las tareas.
+- No incluí las claves de Telescope en el código ni las usé para las tareas.
 - Las pruebas con respuestas simuladas no demuestran disponibilidad del servidor.
 
 ## Dirección de la API y configuración
@@ -88,14 +88,14 @@ Development:
 - Android: com.matiasfd94.gestortareas.profesor.dev.
 
 Estos identificadores no sustituyen las APK originales de Railway.
-La Preview final se generó y actualizó en el celular el 24/11/2026.
-Incluye los ajustes de textos del commit 224eff7; se verificaron los textos y la carga.
+Generé e instalé la Preview final en el celular el 24/11/2026.
+Incluye los ajustes de textos del commit 224eff7; revisé los textos y la carga.
 
 [Descargar Preview final de Matías Tareas](https://expo.dev/accounts/matiasfd94/projects/gestor-tareas-duartematias/builds/5333787c-0e01-4f0a-b365-6294c0efceae).
 
 Para usar esta Preview instalada solo se necesita internet; no hace falta Metro,
 Expo Go, Laravel local ni XAMPP.
-La variante Development dedicada de esta rama no fue compilada.
+Todavía no compilé la variante Development dedicada de esta rama.
 
 ## Verificaciones
 
@@ -130,4 +130,4 @@ No hace falta reinstalar la Preview original: permanece instalada.
 - [Arquitectura de esta variante](docs/arquitectura.md)
 - [Pruebas automáticas](docs/testeo/evidencias/api-profesor-tests.json)
 
-Los informes originales de incidencias se conservan como historia del trabajo.
+Conservé los informes originales de incidencias como historia del trabajo.

@@ -26,8 +26,8 @@ No se crean cookies, encabezados Authorization ni conexiones a la base desde la 
 
 ## Pantalla
 
-Se conserva el diseño oscuro y el ícono del proyecto.
-Se indica explícitamente que las tareas son compartidas.
+Conservé el diseño oscuro y el ícono del proyecto.
+Ajusté los textos del encabezado y del formulario. La API mantiene el listado compartido.
 Los contadores representan los resultados cargados y filtrados, no el total global.
 
 La búsqueda espera 275 ms. Cambiar filtros cancela la consulta anterior
